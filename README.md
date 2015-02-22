@@ -1,3 +1,3 @@
 # deep inverse regression
 
-Using unsupervised AI within sub-corpora as the input for Bayesian discrimination.
+Using unsupervised AI within sub-groups as the input for Bayesian discrimination.
