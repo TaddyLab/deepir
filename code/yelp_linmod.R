@@ -8,7 +8,6 @@ x <- sparseMatrix(
 x <- x[,colSums(x>0)>5]
 y <- as.numeric(sparseMatrix( i=yelp[,1]+1, j=yelp[,3]+1 )[,2])
 testset <- read.table("data/yelp_test.txt")[,1] + 1
-n <- nrow(dtm)
 
 library(gamlr)
 logistic = gamlr(x[-testset,], y[-testset], lmr=1e-4, family="binomial", verb=TRUE)
