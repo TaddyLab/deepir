@@ -17,4 +17,4 @@ plot(logistic)
 dev.off()
 
 yhat <- as.numeric(predict(logistic, x[testset,], type="response") > 0.5)
-mean(y[testset]==yhat)
+cat("MC rate", mean(y[testset]==yhat), "\n")

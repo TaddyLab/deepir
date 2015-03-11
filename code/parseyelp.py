@@ -17,8 +17,8 @@ numeric = re.compile(r'(?<=\s)(\d+|\w\d+|\d+\w)(?=\s)', re.I|re.U)
 swrd = re.compile(r'(?<=\s)(,|"|to|a|the|an|and|or|in|at|with|for|are|is|the|if|of)(?=\s)', re.I|re.U)
 # separators (any whitespace)
 seps = re.compile(r'\s+')
-# exclamation marks are a special way to end your sentence
-exclaim = re.compile(r'(\!+)')
+# special ways to end your sentence
+eos = re.compile(r'([\?\!]+)')
 
 # cleaner (order matters)
 def clean(text): 
@@ -28,7 +28,7 @@ def clean(text):
     text = numeric.sub(' ', text)
     text = swrd.sub(' ', text)
     text = seps.sub(' ', text)
-    #text = exclaim.sub(r'\1 . ', text)
+    text = eos.sub(r'\1 . ', text)
     return text
 
 
