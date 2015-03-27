@@ -1,7 +1,6 @@
 suppressMessages(library(Matrix))
 args <- commandArgs(TRUE)
 src <- args[1]
-print(src)
 
 revs <- read.table(sprintf("data/%s_phrases.txt", src),
 	sep="|",quote=NULL, comment="", 
@@ -17,7 +16,7 @@ levels(revs[,4]) <- c("train","test")
 testset <- which(sparseMatrix( i=revs[,1]+1, j=as.numeric(revs[,4])+1 )[,2])
 
 library(gamlr)
-fit = gamlr(x[-testset,], y[-testset], family="binomial")
+fit = gamlr(x[-testset,], y[-testset], family="binomial", lmr=1e-4)
 
 png(file=sprintf("graphs/%s_logistic.png",src), width=12,height=5, units="in", res=360)
 plot(fit)
