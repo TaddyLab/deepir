@@ -1,7 +1,5 @@
-suppressMessages(library(Matrix))
-args <- commandArgs(TRUE)
-src <- args[1]
-
+suppressMessages(library(gamlr))
+src <- "yelp"
 revs <- read.table(sprintf("data/%s_phrases.txt", src),
 	sep="|",quote=NULL, comment="", 
 	col.names=c("rev","phrase","y","sample"))
@@ -15,10 +13,12 @@ y <- as.numeric(sparseMatrix( i=revs[,1]+1, j=revs[,3]+1 )[,2])
 levels(revs[,4]) <- c("train","test")
 testset <- which(sparseMatrix( i=revs[,1]+1, j=as.numeric(revs[,4])+1 )[,2])
 
-library(gamlr)
+scores <- read.table("data/yelpscores.txt")
+
+x <- cBind(as.matrix(scores),x)
 fit = gamlr(x[-testset,], y[-testset], family="binomial", lambda.min.ratio=1e-4)
 
-png(file=sprintf("graphs/%s_logistic.png",src), width=12,height=5, units="in", res=360)
+png(file=sprintf("graphs/%s_withscore.png",src), width=12,height=5, units="in", res=360)
 plot(fit)
 invisible(dev.off())
 
