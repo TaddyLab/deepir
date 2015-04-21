@@ -10,7 +10,7 @@ import json
 contractions = re.compile(r"'|-")
 symbols = re.compile(r'(\W+)', re.U)
 numeric = re.compile(r'(?<=\s)(\d+|\w\d+|\d+\w)(?=\s)', re.I)
-swrd = re.compile(r'(?<=\s)(,|"|\(|\))(?=\s)', re.I)
+swrd = re.compile(r'(?<=\s)(,|"|\(|\)|to|a|as|the|an|and|or|for|are|is)(?=\s)', re.I)
 suffix = re.compile(r'(?<=\w)(s|ings*|ly|(?<=e)[sd]+)(?=\s)')
 seps = re.compile(r'\s+')
 
