@@ -3,10 +3,6 @@ import numpy as np
 from copy import deepcopy
 from gensim.models import Word2Vec
 
-fin = open("data/yelptrain1star.txt")
-firstbadreview = fin.readline()
-print(firstbadreview)
-
 import re
 alteos = re.compile(r'( [!\?] )')
 
@@ -17,50 +13,46 @@ def YelpReviews( stars = [1,2,3,4,5], prefix="train" ):
             line = alteos.sub(r' \1 . ', line).rstrip("( \. )*\n")
             yield [s.split() for s in line.split(" . ")]
 
-reviews = {}
-reviews['neg'] = list(YelpReviews([1,2]))
-reviews['pos'] = list(YelpReviews([5]))
-nbad = len(reviews['neg'])
-ngood = len(reviews['pos'])
-reviews['neg'][0][:4]
+reviews = { s: list(YelpReviews([s])) for s in range(1,6) }
+
 
 jointmodel = Word2Vec(workers=4)
-allsentences = [s for r in reviews['neg']+reviews['pos'] for s in r]
+allsentences = [s for k in reviews for r in reviews[k] for s in r]
 np.random.shuffle(allsentences)
 jointmodel.build_vocab(allsentences)  
-models = {}
-models['neg'] = deepcopy(jointmodel)
-models['pos'] = deepcopy(jointmodel)
 
-sentneg = [s for r in reviews['neg'] for s in r]
-sentpos = [s for r in reviews['pos'] for s in r]
-
-def trainx(mod, sent, T=20):
-    mod.min_alpha = mod.alpha
+model = { s: deepcopy(jointmodel) for s in range(1,6) }
+def trainx(s, T=10):
+    sent = [l for r in reviews[s] for l in r]
+    model[s].min_alpha = model[s].alpha
     for epoch in range(T):
         print(epoch, end=" ")
         np.random.shuffle(sent)
-        mod.train(sent)
-        mod.alpha *= 0.9  
-        mod.min_alpha = mod.alpha  # fix the learning rate, no decay
+        model[s].train(sent)
+        model[s].alpha *= 0.9  
+        model[s].min_alpha = model[s].alpha  # fix the learning rate, no decay
     print(".")
 
-trainx( models['neg'], sentneg)
-trainx( models['pos'], sentpos)
+for s in range(1,6):
+    print(s)
+    %time trainx( s )
 
-def nearby(word):
+def nearby(word, s):
     print(word)
-    print( "POS:", end=" ")
-    for (w,v) in models["pos"].most_similar([word]):
-        print(w, end=" ")
-    print( "\nNEG:", end=" ")
-    for (w,v) in models["neg"].most_similar([word]):
+    print( "%d:"%s, end=" ")
+    for (w,v) in model[s].most_similar([word]):
         print(w, end=" ")
     print("\n")
 
-nearby("food")
-nearby("service")
-nearby("value")
+nearby("food", 1)
+nearby("food", 5)
+
+nearby("service", 1)
+nearby("service", 5)
+
+nearby("value", 1)
+nearby("value", 5)
+
 nearby("atmosphere")
 
 prior = ngood/(nbad+ngood)
