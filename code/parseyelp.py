@@ -20,7 +20,7 @@ def clean(text):
     text = contractions.sub('', text)
     text = symbols.sub(r' \1 ', text)
     text = numeric.sub('000', text)
-    #text = swrd.sub(' ', text)
+    text = swrd.sub(' ', text)
     #text = suffix.sub('', text)
     text = seps.sub(' ', text)
     return text
