@@ -168,16 +168,16 @@ mnir <- mnlm(cl=cl, vmat[-test,], x[-test,], verb=1, bins=5)
 zir <- srproj(mnir, x, select=100)
 
 cat("** COARSE **\n")
-fwdcoarse <- dmr(cl, zir[-test,], ycoarse[-test], lambda.min.ratio=1e-4)
-getpy(fwdcoarse, zf, ycoarse, test)
+fwdcoarse <- gamlr(zir[-test,], ycoarse[-test], lambda.start=0, family="binomial")
+getpy(fwdcoarse, zir, ycoarse, test)
 
 cat("** NNP **\n")
-fwdnnp <- dmr(cl, zir[-test,], ynnp[-test], lambda.min.ratio=1e-4)
-getpy(fwdnnp, zf, ynnp, test)
+fwdnnp <- dmr(cl, zir[-test,], ynnp[-test],  lambda.start=0)
+getpy(fwdnnp, zir, ynnp, test)
 
 cat("** FINE **\n")
-fwdfine <- dmr(cl, zir[-test,], yfine[-test], lambda.min.ratio=1e-4)
-getpy(fwdfine, zf, yfine, test)
+fwdfine <- dmr(cl, zir[-test,], yfine[-test],  lambda.start=0)
+getpy(fwdfine, zir, yfine, test)
 
 
 ### some plots
