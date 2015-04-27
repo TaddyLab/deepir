@@ -51,7 +51,7 @@ Distributed language representations have been studied since the early work on
 neural networks \cite{rumelhart_learning_1986} and have long been applied in
 natural language processing \cite{morin_hierarchical_2005}.  The models are
 generating much recent interest due to the large performance gains from the
-newer systems, including Wor2Vec and the Glove model of Pennington et
+newer systems, including Word2Vec and the Glove model of Pennington et
 al.~\shortcite{pennington_glove:_2014}, observed in tasks such as word
 prediction, word analogy identification, and named entity recognition.
 
@@ -135,7 +135,7 @@ ensemble aggregation of the class-specific answers.
 Word2Vec yields lower misclassification rates than both Doc2Vec-based
 classification and the multinomial inverse regression (MNIR) of Taddy
 \shortcite{taddy_multinomial_2013}.  We did not anticipate such outright
-performance gain.  Moreover, we expect that with careful calibration of the
+performance gain.  Moreover, we expect that with calibration of the
 {\it many} various tuning parameters available when fitting both Word and Doc
 2Vec the performance results will change.  Indeed, we find that all methods
 are often outperformed by phrase-count logistic regression with rare-feature
@@ -356,7 +356,7 @@ difficult to envision a misclassification cost structure that favors such nicely
 
 \section{Discussion}
 
-The goal of this note is to point out inversion as an option for turning distributed language representations into classification rules.  We are not arguing for the supremacy of Word2Vec inversion in particular, and the approach will work with alternative representations.  Moreover, we are not even arguing that it will always outperform purpose-built classification tools.  However, it is a simple, scalable, interpretable, and effective option for classification whenever you are working with such distributed representations.
+The goal of this note is to point out inversion as an option for turning distributed language representations into classification rules.  We are not arguing for the supremacy of Word2Vec inversion in particular, and the approach should work well with alternative representations (e.g., Glove).  Moreover, we are not even arguing that it will always outperform purpose-built classification tools.  However, it is a simple, scalable, interpretable, and effective option for classification whenever you are working with such distributed representations.
 
 \bibliographystyle{acl}
 \bibliography{deepir}
