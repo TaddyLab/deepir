@@ -1,5 +1,3 @@
-%
-% File acl2015.tex
 
 \documentclass[11pt]{article}
 \usepackage{acl2015}
@@ -43,9 +41,9 @@ their neighbors in a Skip-gram likelihood.  That is, to maximize
 \sum_{k\neq t,~j=t-b}^{t+b} \log\mathrm{p}_{\mathcal{V}}(w_{sj}\mid w_{st})
 \end{equation}
 summed across all words $w_{st}$ in all sentences $\mathbf{w}_s$, where $b$ is
-the skip-gram window (possibly truncated by the end or beginning of the
-sentence) and the function $\mathrm{p}_{\mathcal{V}}(w_{sj}| w_{st})$ is a neural network
-classifier that takes vector-space representations for $w_{st}$ and $w_{sj}$
+the skip-gram window (truncated by the ends of the
+sentence) and  $\mathrm{p}_{\mathcal{V}}(w_{sj}| w_{st})$ is a neural network
+classifier that takes vector representations for $w_{st}$ and $w_{sj}$
 as input (see Section \ref{sec:w2v}).
 
 Distributed language representations have been studied since the early work on
@@ -110,7 +108,17 @@ yield directly a document classification rule via (\ref{eq:bayesrule}).  This
 approach has a number of attractive qualities.
 
 \vskip .2cm
-\noindent \textbf{Modularity:} The inversion strategy works for any model of language that can (or its training can) be interpreted as a probabilistic model.  This makes for easy implementation in any system that has already been engineered to fit such language representations.  In business applications, this will lead to faster deployment and lower development costs.  The strategy is also very interpretable: whatever intuition one has about the distributed language model can be applied directly to the resulting inversion-based classification rule.
+\noindent \textbf{Simplicity:} The inversion strategy works for any model of
+language that can (or its training can) be interpreted as a probabilistic
+model.  This makes for easy implementation in any system that has already been
+engineered to fit such language representations.  
+%This will lead to faster deployment and lower development costs.  
+The strategy is also very interpretable: whatever intuition one has about the
+distributed language model can be applied directly to the resulting
+inversion-based classification rule.  Finally, given its relatively strong
+performance in classification, inversion can be used to add a plausible model
+for reader understanding and inference on to a given language composition
+model.
 
 \vskip .2cm
 \noindent \textbf{Scalability:}  when fitting distributed representations for
@@ -143,22 +151,25 @@ classification.
 The remainder of the paper outlines how inversion works with the specific
 Word2Vec framework and provides an illustration of the ideas in classification
 of Yelp reviews.  The implementation requires only a small extension of the
-popular \texttt{gensim} python library's Word2Vec capability; the extended
-library as well as code to reproduce all of the results and plots in this
-paper are available at \texttt{github.com/taddylab}.  In addition, the yelp
+popular \texttt{gensim} python library \cite{rehurek_software_2010}; the extended
+library as well as code to reproduce all of the results in this
+paper are available on \texttt{github}.
+In addition, the yelp
 data is publicly available as part of the correspond data mining contest at
-\texttt{kaggle.com}.
-
+\texttt{kaggle.com}.  
+See \texttt{github.com/taddylab/deepir} for detail.
 
 
 \section{Implementation}
 \label{sec:w2v}
 
-As outlined in the introduction, Word2Vec trains $\mathcal{V}$ to maximize the skip-gram likelihood of summed word log probabilities in (\ref{eq:skipgram}).  We work with the Huffman softmax specification \cite{mikolov_distributed_2013}, which includes a pre-processing step to encode each vocabulary word in its representation via a binary Huffman tree (see Figure \ref{bht}).
+Word2Vec trains $\mathcal{V}$ to maximize the skip-gram likelihood based on (\ref{eq:skipgram}).  We work with the Huffman softmax specification \cite{mikolov_distributed_2013}, which includes a pre-processing step to encode each vocabulary word in its representation via a binary Huffman tree (see Figure \ref{bht}).
 
 \begin{figure}
 ~~\includegraphics[width=0.45\textwidth]{../graphs/bht}
-\caption{\label{bht} Binary Huffman encoding of a 4 word vocabulary, based upon 18 total utterances.  At each step proceeding from left to right the two nodes with lowest count are combined into a parent node.  Binary encodings are read back off of the splits moving from right to left.}
+\caption{\label{bht} Binary Huffman encoding of a 4 word vocabulary, based upon 18 total utterances.  
+%At each step proceeding from left to right the two nodes with lowest count are combined into a parent node.  Binary encodings are read back off of the splits moving from right to left.
+}
 \end{figure}
 
 Each individual probability is then
@@ -169,9 +180,9 @@ Each individual probability is then
 where $\eta(w,i)$ is the $i^{th}$ node in the Huffman tree path, of  length $L(w)$, for word $w$; $\sigma(x) = 1/(1 + \exp[-x])$; and $\mathrm{ch}(\eta)
 \in \{-1,+1\}$ translates from whether $\eta$ is a left or right child to +/-
 1.  Every word thus has both input and output vector coordinates,
-$\mathbf{v}_w$ and $[\mathbf{u}_{\eta(w,1)} \cdots \mathbf{u}_{\eta(w,1)}]$.
+$\mathbf{v}_w$ and $[\mathbf{u}_{\eta(w,1)} \cdots \mathbf{u}_{\eta(w,L(w))}]$.
 Typically, only the input space $\mathbf{V} = [\mathbf{v}_{w_1} \cdots \mathbf{v}_{w_p}]$,
-for a $p$-word vocabulary, is reported as the distributed language
+for a $p$-word vocabulary, is reported as the  language
 representation -- these vectors are used as input for NLP tasks.    However,
 the full representation $\mathcal{V}$ includes mapping from each word to both
 $\mathbf{V}$ and $\mathbf{U}$.
@@ -187,7 +198,7 @@ We apply the
 
 % \vskip .5cm
 % \begin{center}
-\includegraphics[width=.98\textwidth]{../graphs/coarseprob_bystar}
+\includegraphics[width=1\textwidth]{../graphs/coarseprob_bystar}
 % \end{center}
 % \vskip -.25cm
 \caption{\label{pic:coarseprob} Out-of-Sample fitted probabilities of a review having greater than 2 stars. 
@@ -210,7 +221,7 @@ We apply the
 Given Word2Vec trained on each of $C$ corpora $D_1 \ldots D_C$, leading to $C$
 distinct language representations $\mathcal{V}_1 \dots \mathcal{V}_C$, classification for new documents is straightforward.  Consider the $S$-sentence document $d$:  each sentence $\mathbf{w}_s$ is given a {\it probability} under each representation $\mathcal{V}_c$ by applying the calculations in (\ref{eq:skipgram}) and (\ref{eq:neuralnet}).  This leads to the $S \times C$ matrix of sentence probabilites, $\mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s)$, and the document probabilities are obtained as the column means
 \begin{equation}
-\mathrm{p}_{\mathcal{V}_c} = \frac{1}{S}\sum_s \mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s).
+\mathrm{p}_{\mathcal{V}_c}(d) = \frac{1}{S}\sum_s \mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s).
 \end{equation}
 Finally, class probabilities are calculated via Bayes rule as in (\ref{eq:bayesrule}).  We use priors $\pi_c = 1/C$, so that classification proceeds by assigning the class
 \begin{equation}\label{eq:class}
@@ -222,11 +233,11 @@ Finally, class probabilities are calculated via Bayes rule as in (\ref{eq:bayesr
 \section{Illustration}
 
 We consider a corpus of reviews provided by Yelp for a contest on {\tt
-kaggle.com}.  The text is tokenized simply by converting to lowercase before splitting on punctuation and white-space.  The training data are 200,000 reviews containing a total of 2
+kaggle.com}.  The text is tokenized simply by converting to lowercase before splitting on punctuation and white-space.  The training data are 230,000 reviews containing more than 2
 million sentences. Each review is marked by a number of {\it stars}, from 1
 to 5, and we fit separate Word2Vec representations $\mathcal{V}_1 \ldots
 \mathcal{V}_5$ for the documents at each star rating.  The validation data
-consists of 20,000 reviews, and we apply the inversion technique of Section
+consists of 23,000 reviews, and we apply the inversion technique of Section
 \ref{sec:w2v} to score each validation document $d$ with class probabilities
 $\mathbf{q} = [q_1 \cdots q_5]$, where $q_c = \mathrm{p}(c|d)$.
 
