@@ -21,8 +21,9 @@
 \begin{abstract}
 There have been many recent advances in the structure and measurement of {\it distributed} language models: those that map from words to a vector-space that is rich in information about word choice and composition.  This vector-space is the distributed language representation.    
 
-Given the success of such approaches,  researchers have proposed
-models and algorithms to adapt them for use in document classification; e.g., for predicting sentiment.  The goal of this note is to point out that any distributed  representation can be turned into a classifier through inversion via Bayes rule.  
+% Given the success of such approaches,  researchers have proposed
+% models and algorithms to adapt them for use in document classification; e.g., for predicting sentiment.  
+The goal of this note is to point out that any distributed  representation can be turned into a classifier through inversion via Bayes rule.  
 The approach is simple and modular, in that it will work with any language representation whose training can be formulated as optimizing a probability model. In our application to 2 million sentences from Yelp reviews, we also find that it performs as well as or better than  complex purpose-built algorithms. \end{abstract}
 
 \section{Introduction}
@@ -60,7 +61,7 @@ such as sentiment prediction or author identification.  One  naive approach is b
 to use aggregated word vectors across a document (e.g., a document's average
 word-vector location) as input to a standard classifier (e.g.,
 logistic regression).  However, a document is actually  an {\it ordered} path
-of  locations through $\mathds{R}$, and simple averaging destroys much of the available
+of  locations through $\mathds{R}^K$, and simple averaging destroys much of the available
 information.  
 
 More sophisticated aggregation is proposed in Socher et al.
@@ -76,8 +77,7 @@ that can be used as input to a generic classifier.
 \subsection{Bayesian Inversion}
 
 These approaches all add considerable model and estimation complexity to the
-original underlying distributed representation. They require careful
-engineering and are not just add-ons to existing systems.   We are proposing a
+original underlying distributed representation.  We are proposing a
 simple alternative that turns fitted distributed language representations into
 document classifiers without any additional modeling or estimation.  
 
@@ -107,55 +107,50 @@ Thus distributed language representations trained separately for each class labe
 yield directly a document classification rule via (\ref{eq:bayesrule}).  This
 approach has a number of attractive qualities.
 
-\vskip .2cm
+\vskip .1cm
 \noindent \textbf{Simplicity:} The inversion strategy works for any model of
 language that can (or its training can) be interpreted as a probabilistic
-model.  This makes for easy implementation in any system that has already been
+model.  This makes for easy implementation in systems that are already 
 engineered to fit such language representations.  
 %This will lead to faster deployment and lower development costs.  
-The strategy is also very interpretable: whatever intuition one has about the
-distributed language model can be applied directly to the resulting
-inversion-based classification rule.  Finally, given its relatively strong
-performance in classification, inversion can be used to add a plausible model
-for reader understanding and inference on to a given language composition
-model.
+The strategy is also interpretable: whatever intuition one has about the
+distributed language model can be applied directly to the 
+inversion-based classification rule.  Finally, inversion adds a
+plausible model for reader understanding on top of any given language
+representation.
 
-\vskip .2cm
-\noindent \textbf{Scalability:}  when fitting distributed representations for
-massive corpora it can be necessary to split the data into pieces for use in
-distributed optimization. Our model of classification via inversion provides a
-convenient top-level partitioning of the data.  An efficient system could be
-designed to fit separate by-class language representations, which will provide
-for document classification as in this article as well as class-specific
-answers for NLP tasks such as word prediction or analogy.  When one wishes to
-treat a document as unlabeled, NLP tasks can be answered through an ensemble
-aggregation of the class-specific answers.
+\vskip .1cm
+\noindent \textbf{Scalability:}  when working with
+massive corpora it is often useful to split the data into blocks as part of
+distributed computing strategies. Our model of classification via inversion
+provides a convenient top-level partitioning of the data.  An efficient system
+could fit separate by-class language representations, which
+will provide for document classification as in this article as well as
+class-specific answers for NLP tasks such as word prediction or analogy.  When
+one wishes to treat a document as unlabeled, NLP tasks can be answered through
+ensemble aggregation of the class-specific answers.
 
-\vskip .2cm
-\noindent \textbf{Performance:} We find that, in our Yelp review
-classification examples,  inversion of Word2Vec yields lower misclassification
-rates than both Doc2Vec-based classification and the multinomial inverse
-regression (MNIR) of Taddy
-\cite{taddy_multinomial_2013}, another framework for mapping from documents to
-a vector space for use in classification.  We did not anticipate such outright
+\vskip .1cm
+\noindent \textbf{Performance:} We find that, in our examples,  inversion of
+Word2Vec yields lower misclassification rates than both Doc2Vec-based
+classification and the multinomial inverse regression (MNIR) of Taddy
+\shortcite{taddy_multinomial_2013}.  We did not anticipate such outright
 performance gain.  Moreover, we expect that with careful calibration of the
 {\it many} various tuning parameters available when fitting both Word and Doc
 2Vec the performance results will change.  Indeed, we find that all methods
 are often outperformed by phrase-count logistic regression with rare-feature
 up-weighting and carefully chosen regularization.  However, the completely
 untuned out-of-the-box performance of Word2Vec inversion argues for its
-consideration as a simple default or strong straw-man in document
-classification.
+consideration as a simple default in document classification.
 
 \vskip .2cm
-The remainder of the paper outlines how inversion works with the specific
-Word2Vec framework and provides an illustration of the ideas in classification
-of Yelp reviews.  The implementation requires only a small extension of the
-popular \texttt{gensim} python library \cite{rehurek_software_2010}; the extended
-library as well as code to reproduce all of the results in this
-paper are available on \texttt{github}.
-In addition, the yelp
-data is publicly available as part of the correspond data mining contest at
+In the remainder, we outline classification through inversion of a specific
+Word2Vec model and illustrate of the ideas in classification of Yelp reviews.
+The implementation requires only a small extension of the popular
+\texttt{gensim} python library \cite{rehurek_software_2010}; the extended
+library as well as code to reproduce all of the results in this paper are
+available on \texttt{github}. In addition, the yelp data is publicly available
+as part of the correspond data mining contest at
 \texttt{kaggle.com}.  
 See \texttt{github.com/taddylab/deepir} for detail.
 
@@ -188,7 +183,7 @@ the full representation $\mathcal{V}$ includes mapping from each word to both
 $\mathbf{V}$ and $\mathbf{U}$.
 
 We apply the
-\texttt{gensim} Python implementation of Word2Vec, which fits the model via stochastic gradient descent (SGD),  under default specification.  This includes a vector space of dimension $K=100$ and a skip-gram window of size $b=5$.  
+\texttt{gensim} python implementation of Word2Vec, which fits the model via stochastic gradient descent (SGD),  under default specification.  This includes a vector space of dimension $K=100$ and a skip-gram window of size $b=5$.  
 
 \subsection{Word2Vec Inversion}
 
@@ -200,7 +195,7 @@ We apply the
 % \begin{center}
 \includegraphics[width=1\textwidth]{../graphs/coarseprob_bystar}
 % \end{center}
-% \vskip -.25cm
+\vskip -.25cm
 \caption{\label{pic:coarseprob} Out-of-Sample fitted probabilities of a review having greater than 2 stars. 
 %In the top histograms, red (dark) are the probabilities for true negative reviews and yellow (light) are for true positives.
 }
@@ -218,8 +213,15 @@ We apply the
 % \caption{\label{pic:fineprob} Out-of-Sample fitted probabilities for  observed truth.  In the top plot, we are predicting Negative ($\leq 2$), Neutral ($3$), or Positive ($\geq 4$).  In the bottom, we are predicting each of the separate 5 star ratings.}
 % \end{figure*}
  
-Given Word2Vec trained on each of $C$ corpora $D_1 \ldots D_C$, leading to $C$
-distinct language representations $\mathcal{V}_1 \dots \mathcal{V}_C$, classification for new documents is straightforward.  Consider the $S$-sentence document $d$:  each sentence $\mathbf{w}_s$ is given a {\it probability} under each representation $\mathcal{V}_c$ by applying the calculations in (\ref{eq:skipgram}) and (\ref{eq:neuralnet}).  This leads to the $S \times C$ matrix of sentence probabilites, $\mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s)$, and the document probabilities are obtained as the column means
+Given Word2Vec trained on each of $C$ class-specific corpora $D_1 \ldots D_C$,
+leading to $C$ distinct language representations $\mathcal{V}_1 \dots
+\mathcal{V}_C$, classification for new documents is straightforward.  Consider
+the $S$-sentence document $d$:  each sentence $\mathbf{w}_s$ is given a 
+probability under each representation $\mathcal{V}_c$ by applying the
+calculations in (\ref{eq:skipgram}) and (\ref{eq:neuralnet}).  This leads to
+the $S \times C$ matrix of sentence probabilites,
+$\mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s)$, and  document probabilities are
+obtained %as the column means
 \begin{equation}
 \mathrm{p}_{\mathcal{V}_c}(d) = \frac{1}{S}\sum_s \mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s).
 \end{equation}
@@ -237,52 +239,57 @@ kaggle.com}.  The text is tokenized simply by converting to lowercase before spl
 million sentences. Each review is marked by a number of {\it stars}, from 1
 to 5, and we fit separate Word2Vec representations $\mathcal{V}_1 \ldots
 \mathcal{V}_5$ for the documents at each star rating.  The validation data
-consists of 23,000 reviews, and we apply the inversion technique of Section
+consist of 23,000 reviews, and we apply the inversion technique of Section
 \ref{sec:w2v} to score each validation document $d$ with class probabilities
 $\mathbf{q} = [q_1 \cdots q_5]$, where $q_c = \mathrm{p}(c|d)$.
 
 The probabilities will be used in three different classification tasks; for reviews as 
-\begin{itemize}
-\item[$a.$] negative at 1-2 stars, or positive at 3-5 stars; 
-\item[$b.$] negative at 1-2 stars, neutral at 3 star, or positive at 4-5 stars;
-\item[$c.$] corresponding to each of 1 to 5 stars.
-\end{itemize}
+
+\vskip .1cm
+$a.$ negative at 1-2 stars, or positive at 3-5 stars; 
+
+\vskip .1cm
+$b.$ negative 1-2, neutral 3, or positive 4-5 stars;
+
+\vskip .1cm
+$c.$ corresponding to each of 1 to 5 stars.
+
+\vskip .1cm
 In each case, classification proceeds but summing across the relevant
-sub-class probabilities.  For example, in task $a$, $\mathrm{p}(\texttt{positive}) =
-q_3+q_4+q_5$. We emphasize that the same five fitted Word2Vec representations are
-used for each task; all that differs is the outcome to be predicted.
+sub-class probabilities.  For example, in task $a$,
+$\mathrm{p}(\texttt{positive}) = q_3+q_4+q_5$. Note that the same five fitted
+Word2Vec representations are used for each task.
 
 We consider three comparator techniques.
 
-\vskip .2cm
+\vskip .1cm
 \noindent \textit{Doc2Vec} is also fit via \texttt{gensim}, using the same
-latent space specification for Word2Vec: $K=100$ and $b=5$.  As recommended in
-the documentation, we apply repeated SGD over 20 re-orderings of each document
-set (for comparability, this was also done when fitting Word2Vec).  Le and
-Mikolov provide two alternative Doc2Vec specifications: distributed memory
-(DM) and distributed bag-of-words (DBOW).  We follow the original paper by
-fitting both on the training data, then training vector representations for
-validation documents without updating the word-vector elements of the models.
-This leads to 100 dimensional vectors for each document for each of the DM and
-DCBOW models.  We train maximum likelihood logistic regression for each and
-for the combined 200 dimensional DM+DBOW representation, leading to 
-three candidate Doc2Vec classifiers for each task.
+latent space specification as for Word2Vec: $K=100$ and $b=5$.  
+% As recommended
+% in the documentation, we apply repeated SGD over 20 re-orderings of each
+% corpus (for comparability, this was also done when fitting Word2Vec).
+Le and Mikolov provide two alternative Doc2Vec specifications: distributed
+memory (DM) and distributed bag-of-words (DBOW).  We fit both. Vector representations for validation documents are trained without
+updating the word-vector elements, leading to 100 dimensional vectors for
+each document for each of DM and DCBOW.  We input each, as well as the combined 200 dimensional
+DM+DBOW representation, to  separate maximum
+likelihood logistic regressions. 
 
-\vskip .2cm
+\vskip .1cm
 \noindent \textit{MNIR}, the multinomial inverse regression of Taddy
-\shortcite{taddy_multinomial_2013,taddy_measuring_2013,taddy_distributed_2013},
+\shortcite{taddy_multinomial_2013,taddy_distributed_2014}, %taddy_measuring_2013
 is applied  as implemented in the \texttt{textir} package for R.  MNIR maps
 from text to the class-space of interest through a multinomial logistic
 regression of word (or phrase) counts onto variables relevant to the
-class-space. Here, we regress word counts onto stars expressed both
+class-space. Here, we regress word counts onto stars expressed 
 numerically and as a 5-dimensional indicator vector, leading to a 6-feature
 multinomial logistic regression.  The MNIR procedure then uses the $6\times p$
 matrix of feature-word regression coefficients to map from word-count to
 feature space, resulting in 6 dimensional `sufficient reduction' statistics
-for each document.  As for Doc2Vec, these statistics are then input to maximum
+for each document.  These statistics are then input to maximum
 likelihood logistic regressions.
 
-\vskip .2cm
+\vskip .1cm
 \noindent \textit{Phrase regression} applies logistic regression of the
 response classes directly onto word or phrase counts.  The phrases are
 obtained using \texttt{gensim}'s phrase builder, which simply combines highly
@@ -294,7 +301,7 @@ deviation (feature scaling) and selected according to the corrected AICc
 criteria \cite{flynn_efficiency_2013}, using the \texttt{gamlr} R package of
 Taddy \shortcite{taddy_one-step_2014}.  For multi-class tasks $b-c$, we use
 \texttt{gamlr} in distribution via the \texttt{distrom} R package of Taddy
-\shortcite{taddy_distributed_2013}.
+\shortcite{taddy_distributed_2014}.
 
 \begin{table}
 \hspace{-.25cm}
@@ -315,47 +322,41 @@ MNIR & .095 & .254 & .508
 \subsection{Results}
 
 Misclassification rates for each task on the validation set are reported in
-Table 1. We see that the simple phrase-count regression is consistently the
+Table 1. Simple phrase-count regression is consistently the
 strongest performer, bested only by Word2Vec inversion on task $b$.  This is
-partially due to the relative strength of discriminative (e.g., logistic
-regression) vs generative (e.g., all others here) classifiers outlined in Ng
-and Jordan \shortcite{ng_discriminative_2002} ( and in Taddy
-\shortcite{taddy_rejoinder:_2013} in the specific context of MNIR).  Given the
-large amount of training text in this corpus, asymptotic efficiency of
-logistic regression will start to work in its favor over the finite sample
-advantages of generative discrimination.  However, the comparison is also a
-bit unfair to Word2Vec and Doc2Vec as models: both phrase regression and MNIR
-are optimized exactly according to sophisticated AICc penalty selection, while
-Word and Doc 2Vec have only been approximately optimized under a single
-non-optimized model specification.  As we are finding with the current rise of
-deep learning algorithms, many of these models only begin to shine after a
-period of careful engineering.
+partially due to the relative strengths of discriminative (e.g., logistic
+regression) vs generative (e.g., all others here) classifiers: given a large amount of
+training text, asymptotic efficiency of logistic regression will start to work
+in its favor over the finite sample advantages of generative discrimination
+\cite{ng_discriminative_2002,taddy_rejoinder:_2013}.
+However, the comparison is also unfair to Word2Vec and Doc2Vec: both
+phrase regression and MNIR are optimized exactly under
+AICc selected penalty, while Word and Doc 2Vec have only been approximately
+optimized under a single specification.  The
+distributed representations should improve  with some careful engineering.
 
-After phrase regression, Word2Vec inversion outperforms the other alternatives
-(except, by a narrow margin, MNIR if task $a$).  Doc2Vec inversion under DBOW
+Word2Vec inversion outperforms the other generative classifier alternatives
+(except, by a narrow margin, MNIR in task $a$).  Doc2Vec under DBOW
 specification and MNIR both do worse, but not by a large margin.  Their
 similar performance might be expected: both have a version of logistic (or
-closely related softmax) regression for word-counts as their first step.  MNIR
-regresses the words onto the observed class information, while Doc2Vec
-regresses onto a latent vector space.  In contrast to the Le and Mikolov
-examples, we find here that the more complex Doc2Vec DM model does much worse
+softmax) regression for word-counts as their first step.  MNIR
+regresses the words onto observed class information, while Doc2Vec DBOW
+regresses onto a latent vector space.  In contrast to  Le and Mikolov, we find here that the Doc2Vec DM model does much worse
 than DBOW.
 
 Looking at the fitted probabilities in detail we see that Word2Vec provides a
-more realistic document {\it ranking} than any comparator, including phrase
-regression.  For example, Figure \ref{pic:coarseprob} shows the probabilities
-for task $a$ as a function of the true star rating for each validation review.
-Although phrase regression does slightly better on this task in terms of
-misclassification rate, it does so at the cost of classifying many terrible (1
-star) reviews as positive.  Word2Vec inversion is the {\it only} method that
-yields positive-document probabilities that are clearly increasing in
-distribution with the true star rating.  It is not difficult to envision a
-misclassification cost structure that favors these nicely ordered probabilities
-over those coming from, say, phrase regression.
+more useful document {\it ranking} than any comparator (including phrase
+regression).  For example, Figure \ref{pic:coarseprob} shows the probabilities
+of a review being `positive' in task $a$ as a function of the true star rating
+for each validation review. Although phrase regression does slightly better in terms of misclassification rate, it does so at the cost of
+classifying many terrible (1 star) reviews as positive.  Word2Vec inversion is
+the {\it only} method that yields positive-document probabilities that are
+clearly increasing in distribution with the true star rating.  It is not
+difficult to envision a misclassification cost structure that favors such nicely ordered probabilities.
 
 \section{Discussion}
 
-The goal of this note is to point out how inversion should be considered as a single step for turning distributed language representations into classification rules.  We are not arguing for the supremacy of Word2Vec inversion in particular, and the approach will work nicely with alternative representations.  Moreover, we are not even arguing that it will always outperform purpose-built classification tools.  However, it is a simple, scalable, interpretable, and effective option for classification whenever you are working with such distributed representations.
+The goal of this note is to point out inversion as an option for turning distributed language representations into classification rules.  We are not arguing for the supremacy of Word2Vec inversion in particular, and the approach will work with alternative representations.  Moreover, we are not even arguing that it will always outperform purpose-built classification tools.  However, it is a simple, scalable, interpretable, and effective option for classification whenever you are working with such distributed representations.
 
 \bibliographystyle{acl}
 \bibliography{deepir}
