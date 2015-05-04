@@ -17,9 +17,9 @@ digraph Tree {
 	3 -> 9 [label = "1"];
 	4 -> 6 ;
 	5 -> 7 ;
-	6 [label="00  Thanks 6"] ;
-	7 [label="01  Buddy  5"] ;
-	8 [label="10  Hello 4"] ;
-	9 [label="11   No  3"] ;
+	6 [label="10  Thanks 6"] ;
+	7 [label="11  Buddy  5"] ;
+	8 [label="00  Hello 4"] ;
+	9 [label="01   No  3"] ;
 }
 

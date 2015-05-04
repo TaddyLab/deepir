@@ -1,18 +1,11 @@
-%
-% File acl2015.tex
 
 \documentclass[11pt]{article}
 \usepackage{acl2015}
 \usepackage{times}
 \usepackage{url}
+\usepackage{dsfont}
 \usepackage{latexsym}
-
-%\setlength\titlebox{5cm}
-
-% You can expand the titlebox if you need extra space
-% to show all the authors. Please do not make the titlebox
-% smaller than 5cm (the original size); we will check this
-% in the camera-ready version and ask you to change it back.
+\usepackage{graphicx}
 
 
 \title{Document Classification by Inversion of \\Distributed Language Representations}
@@ -28,365 +21,345 @@
 \begin{abstract}
 There have been many recent advances in the structure and measurement of {\it distributed} language models: those that map from words to a vector-space that is rich in information about word choice and composition.  This vector-space is the distributed language representation.    
 
-Given the success of such representations,  researchers have proposed
-models and algorithms to adapt them for use in document classification; e.g., for predicting sentiment.  The goal of this note is to point out that any distributed  representation can be turned into a classifier through inversion via Bayes rule.  
+% Given the success of such approaches,  researchers have proposed
+% models and algorithms to adapt them for use in document classification; e.g., for predicting sentiment.  
+The goal of this note is to point out that any distributed  representation can be turned into a classifier through inversion via Bayes rule.  
 The approach is simple and modular, in that it will work with any language representation whose training can be formulated as optimizing a probability model. In our application to 2 million sentences from Yelp reviews, we also find that it performs as well as or better than  complex purpose-built algorithms. \end{abstract}
 
 \section{Introduction}
 
-Distributed language representations 
-A popular example is the word2vec machinery.  This 
-trains the distributed representation to be useful as an input layer for prediction of
-words from their neighbors in a Skipgram likelihood.
+Distributed, or vector-space, language representations $\mathcal{V}$ consist
+of a location for every vocabulary {\it word} in $\mathds{R}^K$, where $K$ is
+the dimension of the latent representation space.  These locations are learned
+to optimize (or approximately optimize) an objective function defined on the
+original text, such as a likelihood for word occurrences.
+
+A popular example is the Word2Vec machinery of
+Mikolov et al.~\shortcite{mikolov_distributed_2013}.  This trains the distributed
+representation to be useful as an input layer for prediction of words from
+their neighbors in a Skip-gram likelihood.  That is, to maximize
+\begin{equation}\label{eq:skipgram}
+\sum_{k\neq t,~j=t-b}^{t+b} \log\mathrm{p}_{\mathcal{V}}(w_{sj}\mid w_{st})
+\end{equation}
+summed across all words $w_{st}$ in all sentences $\mathbf{w}_s$, where $b$ is
+the skip-gram window (truncated by the ends of the
+sentence) and  $\mathrm{p}_{\mathcal{V}}(w_{sj}| w_{st})$ is a neural network
+classifier that takes vector representations for $w_{st}$ and $w_{sj}$
+as input (see Section \ref{sec:w2v}).
+
+Distributed language representations have been studied since the early work on
+neural networks \cite{rumelhart_learning_1986} and have long been applied in
+natural language processing \cite{morin_hierarchical_2005}.  The models are
+generating much recent interest due to the large performance gains from the
+newer systems, including Word2Vec and the Glove model of Pennington et
+al.~\shortcite{pennington_glove:_2014}, observed in tasks such as word
+prediction, word analogy identification, and named entity recognition.
+
+Given the success of these new models, researchers have begun searching for
+ways to adapt the representations for use in document classification tasks
+such as sentiment prediction or author identification.  One  naive approach is be
+to use aggregated word vectors across a document (e.g., a document's average
+word-vector location) as input to a standard classifier (e.g.,
+logistic regression).  However, a document is actually  an {\it ordered} path
+of  locations through $\mathds{R}^K$, and simple averaging destroys much of the available
+information.  
+
+More sophisticated aggregation is proposed in Socher et al.
+\shortcite{socher_parsing_2011,socher_recursive_2013}, where recursive neural
+networks are used to combine the word vectors through the estimated parse tree
+for each sentence.  Alternatively,  Le and Mikolov's Doc2Vec
+\shortcite{le_distributed_2014} adds document labels to the conditioning set
+in (\ref{eq:skipgram}) and has them influence the skip-gram likelihood through
+a latent input vector location in $\mathcal{V}$. In each case, the end product
+is a distributed representation for every sentence (or document for Doc2Vec)
+that can be used as input to a generic classifier.
+
+\subsection{Bayesian Inversion}
+
+These approaches all add considerable model and estimation complexity to the
+original underlying distributed representation.  We are proposing a
+simple alternative that turns fitted distributed language representations into
+document classifiers without any additional modeling or estimation.  
+
+Write the probability model that the representation $\mathcal{V}$ has been
+trained to optimize (likelihood maximize) as $\mathrm{p}_{ \mathcal{V}}(d )$,
+where document $d = \{\mathbf{w}_1, ... \mathbf{w}_S\}$ is a set of sentences 
+-- ordered vectors of word identities.  
+For example, in Word2Vec the skip-gram likelihood in
+(\ref{eq:skipgram}) yields
+\begin{equation}\label{eq:fulllhd}
+\log\mathrm{p}_{ \mathcal{V}}(d) = \sum_s \sum_{t} \sum_{k\neq t,~j=t-b}^{t+b} 
+\log\mathrm{p}_{ \mathcal{V}_y}(w_{sj}\mid w_{st} ).
+\end{equation}
+Even when such a likelihood is not explicit it will be implied by the objective function that is optimized during training.
+
+Now suppose that your training documents are grouped by class label, $y \in
+\{1 \dots C\}$.  We can train {\it separate} distributed language representations
+for each set of documents as partitioned by $y$; for example, fit Word2Vec independently on each sub-corpus $D_c = \{ d_i : y_i =c \}$ and obtain the labeled distributed representation map $\mathcal{V}_c$.  A new  document $d$ has probability
+$\mathrm{p}_{ \mathcal{V}_c}(d)$ if we treat it as a member of class $c$, and Bayes rule implies
+\begin{equation}\label{eq:bayesrule}
+\mathrm{p}( y | d) = \frac{\mathrm{p}_{ \mathcal{V}_y}(d)\pi_y }
+{\sum_c \mathrm{p}_{ \mathcal{V}_c}(d)\pi_c }
+\end{equation}
+where $\pi_c$ is our prior probability on class label $c$.
+
+Thus distributed language representations trained separately for each class label 
+yield directly a document classification rule via (\ref{eq:bayesrule}).  This
+approach has a number of attractive qualities.
+
+\vskip .1cm
+\noindent \textbf{Simplicity:} The inversion strategy works for any model of
+language that can (or its training can) be interpreted as a probabilistic
+model.  This makes for easy implementation in systems that are already 
+engineered to fit such language representations.  
+%This will lead to faster deployment and lower development costs.  
+The strategy is also interpretable: whatever intuition one has about the
+distributed language model can be applied directly to the 
+inversion-based classification rule.  Finally, inversion adds a
+plausible model for reader understanding on top of any given language
+representation.
+
+\vskip .1cm
+\noindent \textbf{Scalability:}  when working with
+massive corpora it is often useful to split the data into blocks as part of
+distributed computing strategies. Our model of classification via inversion
+provides a convenient top-level partitioning of the data.  An efficient system
+could fit separate by-class language representations, which
+will provide for document classification as in this article as well as
+class-specific answers for NLP tasks such as word prediction or analogy.  When
+one wishes to treat a document as unlabeled, NLP tasks can be answered through
+ensemble aggregation of the class-specific answers.
+
+\vskip .1cm
+\noindent \textbf{Performance:} We find that, in our examples,  inversion of
+Word2Vec yields lower misclassification rates than both Doc2Vec-based
+classification and the multinomial inverse regression (MNIR) of Taddy
+\shortcite{taddy_multinomial_2013}.  We did not anticipate such outright
+performance gain.  Moreover, we expect that with calibration of the
+{\it many} various tuning parameters available when fitting both Word and Doc
+2Vec the performance results will change.  Indeed, we find that all methods
+are often outperformed by phrase-count logistic regression with rare-feature
+up-weighting and carefully chosen regularization.  However, the completely
+untuned out-of-the-box performance of Word2Vec inversion argues for its
+consideration as a simple default in document classification.
+
+\vskip .2cm
+In the remainder, we outline classification through inversion of a specific
+Word2Vec model and illustrate of the ideas in classification of Yelp reviews.
+The implementation requires only a small extension of the popular
+\texttt{gensim} python library \cite{rehurek_software_2010}; the extended
+library as well as code to reproduce all of the results in this paper are
+available on \texttt{github}. In addition, the yelp data is publicly available
+as part of the correspond data mining contest at
+\texttt{kaggle.com}.  
+See \texttt{github.com/taddylab/deepir} for detail.
 
 
-\section{General Instructions}
+\section{Implementation}
+\label{sec:w2v}
 
-Manuscripts must be in two-column format.  Exceptions to the
-two-column format include the title, authors' names and complete
-addresses, which must be centered at the top of the first page, and
-any full-width figures or tables (see the guidelines in
-Subsection~\ref{ssec:first}). {\bf Type single-spaced.}  Start all
-pages directly under the top margin. See the guidelines later
-regarding formatting the first page.  The manuscript should be
-printed single-sided and its length
-should not exceed the maximum page limit described in Section~\ref{sec:length}.
-Do not number the pages.
+Word2Vec trains $\mathcal{V}$ to maximize the skip-gram likelihood based on (\ref{eq:skipgram}).  We work with the Huffman softmax specification \cite{mikolov_distributed_2013}, which includes a pre-processing step to encode each vocabulary word in its representation via a binary Huffman tree (see Figure \ref{bht}).
 
+\begin{figure}
+~~\includegraphics[width=0.45\textwidth]{../graphs/bht}
+\caption{\label{bht} Binary Huffman encoding of a 4 word vocabulary, based upon 18 total utterances.  
+%At each step proceeding from left to right the two nodes with lowest count are combined into a parent node.  Binary encodings are read back off of the splits moving from right to left.
+}
+\end{figure}
 
-\subsection{Electronically-available resources}
+Each individual probability is then
+\begin{equation} \label{eq:neuralnet}
+\mathrm{p}_{\mathcal{V}}(w | w_t) =\!\!\!
+ \prod_{j=1}^{L(w)-1} \!\!\!\sigma\!\left( \mathrm{ch}\left[\eta(w,j+1)\right] \mathbf{u}_{\eta(w,j)}^\top \mathbf{v}_{w_t} \right) 
+\end{equation}
+where $\eta(w,i)$ is the $i^{th}$ node in the Huffman tree path, of  length $L(w)$, for word $w$; $\sigma(x) = 1/(1 + \exp[-x])$; and $\mathrm{ch}(\eta)
+\in \{-1,+1\}$ translates from whether $\eta$ is a left or right child to +/-
+1.  Every word thus has both input and output vector coordinates,
+$\mathbf{v}_w$ and $[\mathbf{u}_{\eta(w,1)} \cdots \mathbf{u}_{\eta(w,L(w))}]$.
+Typically, only the input space $\mathbf{V} = [\mathbf{v}_{w_1} \cdots \mathbf{v}_{w_p}]$,
+for a $p$-word vocabulary, is reported as the  language
+representation -- these vectors are used as input for NLP tasks.    However,
+the full representation $\mathcal{V}$ includes mapping from each word to both
+$\mathbf{V}$ and $\mathbf{U}$.
 
-We strongly prefer that you prepare your PDF files using \LaTeX\ with
-the official ACL 2015 style file (acl2015.sty) and bibliography style
-(acl.bst). These files are available at
-\url{http://acl2015.org}. You will also find the document
-you are currently reading (acl2015.pdf) and its \LaTeX\ source code
-(acl2015.tex) on this website.
+We apply the
+\texttt{gensim} python implementation of Word2Vec, which fits the model via stochastic gradient descent (SGD),  under default specification.  This includes a vector space of dimension $K=100$ and a skip-gram window of size $b=5$.  
 
-You can alternatively use Microsoft Word to produce your PDF file. In
-this case, we strongly recommend the use of the Word template file
-(acl2015.dot) on the ACL 2015 website (\url{http://acl2015.org}). 
-If you have an option, we recommend that you use the \LaTeX2e version. 
-If you will be using the Microsoft Word template, we suggest that you 
-anonymize your source file so that the pdf produced does not retain your
-identity.  This can be done by removing any personal information
-from your source document properties.
-
-
-
-\subsection{Format of Electronic Manuscript}
-\label{sect:pdf}
-
-For the production of the electronic manuscript you must use Adobe's
-Portable Document Format (PDF). PDF files are usually produced from
-\LaTeX\ using the \textit{pdflatex} command. If your version of
-\LaTeX\ produces Postscript files, you can convert these into PDF
-using \textit{ps2pdf} or \textit{dvipdf}. On Windows, you can also use
-Adobe Distiller to generate PDF.
-
-Please make sure that your PDF file includes all the necessary fonts
-(especially tree diagrams, symbols, and fonts with Asian
-characters). When you print or create the PDF file, there is usually
-an option in your printer setup to include none, all or just
-non-standard fonts.  Please make sure that you select the option of
-including ALL the fonts. \textbf{Before sending it, test your PDF by
-  printing it from a computer different from the one where it was
-  created.} Moreover, some word processors may generate very large PDF
-files, where each page is rendered as an image. Such images may
-reproduce poorly. In this case, try alternative ways to obtain the
-PDF. One way on some systems is to install a driver for a postscript
-printer, send your document to the printer specifying ``Output to a
-file'', then convert the file to PDF.
-
-It is of utmost importance to specify the \textbf{A4 format} (21 cm
-x 29.7 cm) when formatting the paper. When working with
-{\tt dvips}, for instance, one should specify {\tt -t a4}.
-Or using the command \verb|\special{papersize=210mm,297mm}| in the latex
-preamble (directly below the \verb|\usepackage| commands). Then using 
-{\tt dvipdf} and/or {\tt pdflatex} which would make it easier for some.
+\subsection{Word2Vec Inversion}
 
 
-Print-outs of the PDF file on A4 paper should be identical to the
-hardcopy version. If you cannot meet the above requirements about the
-production of your electronic submission, please contact the
-publication chairs as soon as possible.
+\begin{figure*}
+%\includegraphics[width=\textwidth]{../graphs/coarseprob}
+
+% \vskip .5cm
+% \begin{center}
+\includegraphics[width=1\textwidth]{../graphs/coarseprob_bystar}
+% \end{center}
+\vskip -.25cm
+\caption{\label{pic:coarseprob} Out-of-Sample fitted probabilities of a review having greater than 2 stars. 
+%In the top histograms, red (dark) are the probabilities for true negative reviews and yellow (light) are for true positives.
+}
+\end{figure*}
+ 
+% \begin{figure*}
+% \begin{center}
+% \includegraphics[width=.98\textwidth]{../graphs/nnpprob}
+
+% \vskip .25cm
+
+% \includegraphics[width=.98\textwidth]{../graphs/fineprob}
+% \end{center}
+% \vskip -.25cm
+% \caption{\label{pic:fineprob} Out-of-Sample fitted probabilities for  observed truth.  In the top plot, we are predicting Negative ($\leq 2$), Neutral ($3$), or Positive ($\geq 4$).  In the bottom, we are predicting each of the separate 5 star ratings.}
+% \end{figure*}
+ 
+Given Word2Vec trained on each of $C$ class-specific corpora $D_1 \ldots D_C$,
+leading to $C$ distinct language representations $\mathcal{V}_1 \dots
+\mathcal{V}_C$, classification for new documents is straightforward.  Consider
+the $S$-sentence document $d$:  each sentence $\mathbf{w}_s$ is given a 
+probability under each representation $\mathcal{V}_c$ by applying the
+calculations in (\ref{eq:skipgram}) and (\ref{eq:neuralnet}).  This leads to
+the $S \times C$ matrix of sentence probabilites,
+$\mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s)$, and  document probabilities are
+obtained %as the column means
+\begin{equation}
+\mathrm{p}_{\mathcal{V}_c}(d) = \frac{1}{S}\sum_s \mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s).
+\end{equation}
+Finally, class probabilities are calculated via Bayes rule as in (\ref{eq:bayesrule}).  We use priors $\pi_c = 1/C$, so that classification proceeds by assigning the class
+\begin{equation}\label{eq:class}
+\hat y = \mathrm{argmax}_c ~~\mathrm{p}_{\mathcal{V}_c}(d).
+\end{equation}
 
 
-\subsection{Layout}
-\label{ssec:layout}
 
-Format manuscripts two columns to a page, in the manner these
-instructions are formatted. The exact dimensions for a page on A4
-paper are:
+\section{Illustration}
 
-\begin{itemize}
-\item Left and right margins: 2.5 cm
-\item Top margin: 2.5 cm
-\item Bottom margin: 2.5 cm
-\item Column width: 7.7 cm
-\item Column height: 24.7 cm
-\item Gap between columns: 0.6 cm
-\end{itemize}
+We consider a corpus of reviews provided by Yelp for a contest on {\tt
+kaggle.com}.  The text is tokenized simply by converting to lowercase before splitting on punctuation and white-space.  The training data are 230,000 reviews containing more than 2
+million sentences. Each review is marked by a number of {\it stars}, from 1
+to 5, and we fit separate Word2Vec representations $\mathcal{V}_1 \ldots
+\mathcal{V}_5$ for the documents at each star rating.  The validation data
+consist of 23,000 reviews, and we apply the inversion technique of Section
+\ref{sec:w2v} to score each validation document $d$ with class probabilities
+$\mathbf{q} = [q_1 \cdots q_5]$, where $q_c = \mathrm{p}(c|d)$.
 
-\noindent Papers should not be submitted on any other paper size.
- If you cannot meet the above requirements about the production of 
- your electronic submission, please contact the publication chairs 
- above as soon as possible.
+The probabilities will be used in three different classification tasks; for reviews as 
 
+\vskip .1cm
+$a.$ negative at 1-2 stars, or positive at 3-5 stars; 
 
-\subsection{Fonts}
+\vskip .1cm
+$b.$ negative 1-2, neutral 3, or positive 4-5 stars;
 
-For reasons of uniformity, Adobe's {\bf Times Roman} font should be
-used. In \LaTeX2e{} this is accomplished by putting
+\vskip .1cm
+$c.$ corresponding to each of 1 to 5 stars.
 
-\begin{quote}
-\begin{verbatim}
-\usepackage{times}
-\usepackage{latexsym}
-\end{verbatim}
-\end{quote}
-in the preamble. If Times Roman is unavailable, use {\bf Computer
-  Modern Roman} (\LaTeX2e{}'s default).  Note that the latter is about
-  10\% less dense than Adobe's Times Roman font.
+\vskip .1cm
+In each case, classification proceeds but summing across the relevant
+sub-class probabilities.  For example, in task $a$,
+$\mathrm{p}(\texttt{positive}) = q_3+q_4+q_5$. Note that the same five fitted
+Word2Vec representations are used for each task.
 
+We consider three comparator techniques.
 
-\begin{table}[h]
-\begin{center}
-\begin{tabular}{|l|rl|}
-\hline \bf Type of Text & \bf Font Size & \bf Style \\ \hline
-paper title & 15 pt & bold \\
-author names & 12 pt & bold \\
-author affiliation & 12 pt & \\
-the word ``Abstract'' & 12 pt & bold \\
-section titles & 12 pt & bold \\
-document text & 11 pt  &\\
-captions & 11 pt & \\
-abstract text & 10 pt & \\
-bibliography & 10 pt & \\
-footnotes & 9 pt & \\
-\hline
-\end{tabular}
-\end{center}
-\caption{\label{font-table} Font guide. }
+\vskip .1cm
+\noindent \textit{Doc2Vec} is also fit via \texttt{gensim}, using the same
+latent space specification as for Word2Vec: $K=100$ and $b=5$.  
+% As recommended
+% in the documentation, we apply repeated SGD over 20 re-orderings of each
+% corpus (for comparability, this was also done when fitting Word2Vec).
+Le and Mikolov provide two alternative Doc2Vec specifications: distributed
+memory (DM) and distributed bag-of-words (DBOW).  We fit both. Vector representations for validation documents are trained without
+updating the word-vector elements, leading to 100 dimensional vectors for
+each document for each of DM and DCBOW.  We input each, as well as the combined 200 dimensional
+DM+DBOW representation, to  separate maximum
+likelihood logistic regressions. 
+
+\vskip .1cm
+\noindent \textit{MNIR}, the multinomial inverse regression of Taddy
+\shortcite{taddy_multinomial_2013,taddy_distributed_2014}, %taddy_measuring_2013
+is applied  as implemented in the \texttt{textir} package for R.  MNIR maps
+from text to the class-space of interest through a multinomial logistic
+regression of word (or phrase) counts onto variables relevant to the
+class-space. Here, we regress word counts onto stars expressed 
+numerically and as a 5-dimensional indicator vector, leading to a 6-feature
+multinomial logistic regression.  The MNIR procedure then uses the $6\times p$
+matrix of feature-word regression coefficients to map from word-count to
+feature space, resulting in 6 dimensional `sufficient reduction' statistics
+for each document.  These statistics are then input to maximum
+likelihood logistic regressions.
+
+\vskip .1cm
+\noindent \textit{Phrase regression} applies logistic regression of the
+response classes directly onto word or phrase counts.  The phrases are
+obtained using \texttt{gensim}'s phrase builder, which simply combines highly
+probable pairings; for example, it yields \texttt{first\_date} and
+\texttt{chicken\_wing} in this corpus (these phrases are also used as the
+bag-of-words input to MNIR).  The logistic regressions are then fit under
+$L_1$ regularization with the penalties weighted by phrase-count standard
+deviation (feature scaling) and selected according to the corrected AICc
+criteria \cite{flynn_efficiency_2013}, using the \texttt{gamlr} R package of
+Taddy \shortcite{taddy_one-step_2014}.  For multi-class tasks $b-c$, we use
+\texttt{gamlr} in distribution via the \texttt{distrom} R package of Taddy
+\shortcite{taddy_distributed_2014}.
+
+\begin{table}
+\hspace{-.25cm}
+{
+\begin{tabular}{r|c c c}
+& $a$ (NP) & $b$ (NNP) &  $c$ (1-5)
+\\ \cline{2-4}\rule{0pt}{3ex}
+W2V inversion & .099 & \textbf{.189} & .439 \\
+Phrase regression & \textbf{.084} & .200 & \textbf{.410} \\
+D2V DBOW &  .144 &.282 & .496 \\
+D2V DM & .179 & .306 & .549 \\
+D2V combined & .148 & . 284 & .5 \\
+MNIR & .095 & .254 & .508 
+\end{tabular}}
+\caption{ Out-of-sample misclassification rates.}
 \end{table}
 
-\subsection{The First Page}
-\label{ssec:first}
+\subsection{Results}
 
-Center the title, author's name(s) and affiliation(s) across both
-columns. Do not use footnotes for affiliations. Do not include the
-paper ID number assigned during the submission process. Use the
-two-column format only when you begin the abstract.
+Misclassification rates for each task on the validation set are reported in
+Table 1. Simple phrase-count regression is consistently the
+strongest performer, bested only by Word2Vec inversion on task $b$.  This is
+partially due to the relative strengths of discriminative (e.g., logistic
+regression) vs generative (e.g., all others here) classifiers: given a large amount of
+training text, asymptotic efficiency of logistic regression will start to work
+in its favor over the finite sample advantages of generative discrimination
+\cite{ng_discriminative_2002,taddy_rejoinder:_2013}.
+However, the comparison is also unfair to Word2Vec and Doc2Vec: both
+phrase regression and MNIR are optimized exactly under
+AICc selected penalty, while Word and Doc 2Vec have only been approximately
+optimized under a single specification.  The
+distributed representations should improve  with some careful engineering.
 
-{\bf Title}: Place the title centered at the top of the first page, in
-a 15-point bold font. (For a complete guide to font sizes and styles,
-see Table~\ref{font-table}) Long titles should be typed on two lines
-without a blank line intervening. Approximately, put the title at 2.5
-cm from the top of the page, followed by a blank line, then the
-author's names(s), and the affiliation on the following line. Do not
-use only initials for given names (middle initials are allowed). Do
-not format surnames in all capitals (e.g., use ``Schlangen'' not
-``SCHLANGEN'').  Do not format title and section headings in all
-capitals as well except for proper names (such as ``BLEU'') that are
-conventionally in all capitals.  The affiliation should contain the
-author's complete address, and if possible, an electronic mail
-address. Start the body of the first page 7.5 cm from the top of the
-page.
+Word2Vec inversion outperforms the other generative classifier alternatives
+(except, by a narrow margin, MNIR in task $a$).  Doc2Vec under DBOW
+specification and MNIR both do worse, but not by a large margin.  Their
+similar performance might be expected: both have a version of logistic (or
+softmax) regression for word-counts as their first step.  MNIR
+regresses the words onto observed class information, while Doc2Vec DBOW
+regresses onto a latent vector space.  In contrast to  Le and Mikolov, we find here that the Doc2Vec DM model does much worse
+than DBOW.
 
-The title, author names and addresses should be completely identical
-to those entered to the electronical paper submission website in order
-to maintain the consistency of author information among all
-publications of the conference. If they are different, the publication
-chairs may resolve the difference without consulting with you; so it
-is in your own interest to double-check that the information is
-consistent.
+Looking at the fitted probabilities in detail we see that Word2Vec provides a
+more useful document {\it ranking} than any comparator (including phrase
+regression).  For example, Figure \ref{pic:coarseprob} shows the probabilities
+of a review being `positive' in task $a$ as a function of the true star rating
+for each validation review. Although phrase regression does slightly better in terms of misclassification rate, it does so at the cost of
+classifying many terrible (1 star) reviews as positive.  Word2Vec inversion is
+the {\it only} method that yields positive-document probabilities that are
+clearly increasing in distribution with the true star rating.  It is not
+difficult to envision a misclassification cost structure that favors such nicely ordered probabilities.
 
-{\bf Abstract}: Type the abstract at the beginning of the first
-column. The width of the abstract text should be smaller than the
-width of the columns for the text in the body of the paper by about
-0.6 cm on each side. Center the word {\bf Abstract} in a 12 point bold
-font above the body of the abstract. The abstract should be a concise
-summary of the general thesis and conclusions of the paper. It should
-be no longer than 200 words. The abstract text should be in 10 point font.
+\section{Discussion}
 
-{\bf Text}: Begin typing the main body of the text immediately after
-the abstract, observing the two-column format as shown in 
-the present document. Do not include page numbers.
+The goal of this note is to point out inversion as an option for turning distributed language representations into classification rules.  We are not arguing for the supremacy of Word2Vec inversion in particular, and the approach should work well with alternative representations (e.g., Glove).  Moreover, we are not even arguing that it will always outperform purpose-built classification tools.  However, it is a simple, scalable, interpretable, and effective option for classification whenever you are working with such distributed representations.
 
-{\bf Indent} when starting a new paragraph. Use 11 points for text and 
-subsection headings, 12 points for section headings and 15 points for
-the title. 
+\bibliographystyle{acl}
+\bibliography{deepir}
 
-\subsection{Sections}
-
-{\bf Headings}: Type and label section and subsection headings in the
-style shown on the present document.  Use numbered sections (Arabic
-numerals) in order to facilitate cross references. Number subsections
-with the section number and the subsection number separated by a dot,
-in Arabic numerals. Do not number subsubsections.
-
-{\bf Citations}: Citations within the text appear in parentheses
-as~\cite{Gusfield:97} or, if the author's name appears in the text
-itself, as Gusfield~\shortcite{Gusfield:97}.  Append lowercase letters
-to the year in cases of ambiguity.  Treat double authors as
-in~\cite{Aho:72}, but write as in~\cite{Chandra:81} when more than two
-authors are involved. Collapse multiple citations as
-in~\cite{Gusfield:97,Aho:72}. Also refrain from using full citations
-as sentence constituents. We suggest that instead of
-\begin{quote}
-  ``\cite{Gusfield:97} showed that ...''
-\end{quote}
-you use
-\begin{quote}
-``Gusfield \shortcite{Gusfield:97}   showed that ...''
-\end{quote}
-
-If you are using the provided \LaTeX{} and Bib\TeX{} style files, you
-can use the command \verb|\newcite| to get ``author (year)'' citations.
-
-As reviewing will be double-blind, the submitted version of the papers
-should not include the authors' names and affiliations. Furthermore,
-self-references that reveal the author's identity, e.g.,
-\begin{quote}
-``We previously showed \cite{Gusfield:97} ...''  
-\end{quote}
-should be avoided. Instead, use citations such as 
-\begin{quote}
-``Gusfield \shortcite{Gusfield:97}
-previously showed ... ''
-\end{quote}
-
-\textbf{Please do not use anonymous citations} and do not include
-acknowledgements when submitting your papers. Papers that do not
-conform to these requirements may be rejected without review.
-
-\textbf{References}: Gather the full set of references together under
-the heading {\bf References}; place the section before any Appendices,
-unless they contain references. Arrange the references alphabetically
-by first author, rather than by order of occurrence in the text.
-Provide as complete a citation as possible, using a consistent format,
-such as the one for {\em Computational Linguistics\/} or the one in the 
-{\em Publication Manual of the American 
-Psychological Association\/}~\cite{APA:83}.  Use of full names for
-authors rather than initials is preferred.  A list of abbreviations
-for common computer science journals can be found in the ACM 
-{\em Computing Reviews\/}~\cite{ACM:83}.
-
-The \LaTeX{} and Bib\TeX{} style files provided roughly fit the
-American Psychological Association format, allowing regular citations, 
-short citations and multiple citations as described above.
-
-{\bf Appendices}: Appendices, if any, directly follow the text and the
-references (but see above).  Letter them in sequence and provide an
-informative title: {\bf Appendix A. Title of Appendix}.
-
-\subsection{Footnotes}
-
-{\bf Footnotes}: Put footnotes at the bottom of the page and use 9
-points text. They may be numbered or referred to by asterisks or other
-symbols.\footnote{This is how a footnote should appear.} Footnotes
-should be separated from the text by a line.\footnote{Note the line
-separating the footnotes from the text.}
-
-\subsection{Graphics}
-
-{\bf Illustrations}: Place figures, tables, and photographs in the
-paper near where they are first discussed, rather than at the end, if
-possible.  Wide illustrations may run across both columns.  Color
-illustrations are discouraged, unless you have verified that  
-they will be understandable when printed in black ink.
-
-{\bf Captions}: Provide a caption for every illustration; number each one
-sequentially in the form:  ``Figure 1. Caption of the Figure.'' ``Table 1.
-Caption of the Table.''  Type the captions of the figures and 
-tables below the body, using 11 point text.
-
-
-\section{XML conversion and supported \LaTeX\ packages}
-
-Following ACL 2014 we will also we will attempt to automatically convert 
-your \LaTeX\ source files to publish papers in machine-readable 
-XML with semantic markup in the ACL Anthology, in addition to the 
-traditional PDF format.  This will allow us to create, over the next 
-few years, a growing corpus of scientific text for our own future research, 
-and picks up on recent initiatives on converting ACL papers from earlier 
-years to XML. 
-
-We encourage you to submit a ZIP file of your \LaTeX\ sources along
-with the camera-ready version of your paper. We will then convert them
-to XML automatically, using the LaTeXML tool
-(\url{http://dlmf.nist.gov/LaTeXML}). LaTeXML has \emph{bindings} for
-a number of \LaTeX\ packages, including the ACL 2015 stylefile. These
-bindings allow LaTeXML to render the commands from these packages
-correctly in XML. For best results, we encourage you to use the
-packages that are officially supported by LaTeXML, listed at
-\url{http://dlmf.nist.gov/LaTeXML/manual/included.bindings}
-
-
-
-
-
-\section{Translation of non-English Terms}
-
-It is also advised to supplement non-English characters and terms
-with appropriate transliterations and/or translations
-since not all readers understand all such characters and terms.
-Inline transliteration or translation can be represented in
-the order of: original-form transliteration ``translation''.
-
-\section{Length of Submission}
-\label{sec:length}
-
-Long papers may consist of up to 8 pages of content, plus two extra
-pages for references. Short papers may consist of up to 4 pages of
-content, plus two extra pages for references.  Papers that do not
-conform to the specified length and formatting requirements may be
-rejected without review.
-
-
-
-\section*{Acknowledgments}
-
-The acknowledgments should go immediately before the references.  Do
-not number the acknowledgments section. Do not include this section
-when submitting your paper for review.
-
-% include your own bib file like this:
-%\bibliographystyle{acl}
-%\bibliography{acl2015}
-
-\begin{thebibliography}{}
-
-\bibitem[\protect\citename{Aho and Ullman}1972]{Aho:72}
-Alfred~V. Aho and Jeffrey~D. Ullman.
-\newblock 1972.
-\newblock {\em The Theory of Parsing, Translation and Compiling}, volume~1.
-\newblock Prentice-{Hall}, Englewood Cliffs, NJ.
-
-\bibitem[\protect\citename{{American Psychological Association}}1983]{APA:83}
-{American Psychological Association}.
-\newblock 1983.
-\newblock {\em Publications Manual}.
-\newblock American Psychological Association, Washington, DC.
-
-\bibitem[\protect\citename{{Association for Computing Machinery}}1983]{ACM:83}
-{Association for Computing Machinery}.
-\newblock 1983.
-\newblock {\em Computing Reviews}, 24(11):503--512.
-
-\bibitem[\protect\citename{Chandra \bgroup et al.\egroup }1981]{Chandra:81}
-Ashok~K. Chandra, Dexter~C. Kozen, and Larry~J. Stockmeyer.
-\newblock 1981.
-\newblock Alternation.
-\newblock {\em Journal of the Association for Computing Machinery},
-  28(1):114--133.
-
-\bibitem[\protect\citename{Gusfield}1997]{Gusfield:97}
-Dan Gusfield.
-\newblock 1997.
-\newblock {\em Algorithms on Strings, Trees and Sequences}.
-\newblock Cambridge University Press, Cambridge, UK.
-
-\end{thebibliography}
 
 \end{document}
