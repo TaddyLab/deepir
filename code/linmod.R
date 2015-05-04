@@ -169,16 +169,17 @@ zir <- srproj(mnir, x, select=100)
 
 cat("** COARSE **\n")
 fwdcoarse <- gamlr(zir[-test,], ycoarse[-test], lambda.start=0, family="binomial")
-getpy(fwdcoarse, zir, ycoarse, test)
+pymnircoarse <- getpy(fwdcoarse, zir, ycoarse, test, PY=TRUE)
 
 cat("** NNP **\n")
 fwdnnp <- dmr(cl, zir[-test,], ynnp[-test],  lambda.start=0)
-getpy(fwdnnp, zir, ynnp, test)
+pymnirnnp <- getpy(fwdnnp, zir, ynnp, test, PY=TRUE)
 
 cat("** FINE **\n")
 fwdfine <- dmr(cl, zir[-test,], yfine[-test],  lambda.start=0)
-getpy(fwdfine, zir, yfine, test)
+pymnirfine <- getpy(fwdfine, zir, yfine, test, PY = TRUE)
 
+save.image("linmod.rda", compress=FALSE)
 
 ### some plots
 w2vpc <- w2vpcoarse[test,2]
@@ -195,18 +196,24 @@ hist(pycoarse[ycoarse[test]==1], col=rgb(1,1,0,.7), breaks=10, freq=FALSE, add=T
 hist(pydvcoarse[dvycoarse[dvtest]==0], col=rgb(1,0,0,1), breaks=10, freq=FALSE,
          xlab="", ylab="", xlim=c(0,1), ylim=c(0,8), main="doc2vec regression")
 hist(pydvcoarse[dvycoarse[dvtest]==1], col=rgb(1,1,0,.7), breaks=10, freq=FALSE, add=TRUE)
+
+# hist(pymnircoarse[ycoarse[test]==0], col=rgb(1,0,0,1), breaks=10, freq=FALSE,
+#          xlab="", ylab="", xlim=c(0,1), ylim=c(0,8), main="mnir")
+# hist(pymnircoarse[ycoarse[test]==1], col=rgb(1,1,0,.7), breaks=10, freq=FALSE, add=TRUE)
+
 mtext(side=2, "density", outer=TRUE,cex=.9, font=3)
 mtext(side=1, "probability positive", outer=TRUE, cex=.9, font=3)
 dev.off()
 
 
-pdf("graphs/coarseprob_bystar.pdf", width=9, height=2.75)
-par(mfrow=c(1,3),mai=c(.45,.45,.3,.2),omi=c(.15,.15,0,0))
+pdf("graphs/coarseprob_bystar.pdf", width=9, height=2.5)
+par(mfrow=c(1,4),mai=c(.4,.4,.3,.2),omi=c(.2,.2,0,0))
 boxplot( w2vpc ~ yfine[test], col=heat.colors(5), varwidth=TRUE, main="word2vec inversion")
 boxplot( pycoarse ~ yfine[test], col=heat.colors(5), varwidth=TRUE, main="phrase regression")
 boxplot( pydvcoarse ~ dvyfine[dvtest], col=heat.colors(5), varwidth=TRUE, main="doc2vec regression")
-mtext(side=1, "stars", outer=TRUE,cex=.9, font=3)
-mtext(side=2, "probability positive", outer=TRUE,cex=.9, font=3)
+boxplot( pymnircoarse ~ yfine[test], col=heat.colors(5), varwidth=TRUE, main="mnir")
+mtext(side=1, "stars", outer=TRUE,cex=1, font=3)
+mtext(side=2, "probability positive", outer=TRUE,cex=1, font=3)
 dev.off()
 
 w2vpnnpy <- w2vpnnp[cbind(1:n,ynnp)]
@@ -215,6 +222,7 @@ par(mfrow=c(1,3),mai=c(.45,.45,.3,.2),omi=c(.15,.15,0,0))
 boxplot( w2vpnnpy[test] ~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="word2vec inversion")
 boxplot( pynnp~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="phrase regression")
 boxplot( pydvnnp~ dvynnp[dvtest], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="doc2vec regression")
+# boxplot( pymnirnnp~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="mnir")
 mtext(side=1, "stars", outer=TRUE,cex=.9, font=3)
 mtext(side=2, "probability of true category", outer=TRUE,cex=.9, font=3)
 dev.off()
@@ -225,6 +233,7 @@ par(mfrow=c(1,3),mai=c(.45,.45,.3,.2),omi=c(.15,.15,0,0))
 boxplot( w2vpy[test] ~ yfine[test], col=heat.colors(5), varwidth=TRUE, ylim=c(0,1), main="word2vec inversion")
 boxplot( pyfine~ yfine[test], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="phrase regression")
 boxplot( pydvfine~ dvyfine[dvtest], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="doc2vec regression")
+# boxplot( pymnirfine~ yfine[test], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="mnir")
 mtext(side=1, "stars", outer=TRUE,cex=.9, font=3)
 mtext(side=2, "probability of true stars", outer=TRUE,cex=.9, font=3)
 dev.off()
