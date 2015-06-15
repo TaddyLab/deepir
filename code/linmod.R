@@ -109,7 +109,7 @@ logitcoarse <- gamlr(x[-test,], ycoarse[-test],
                 family="binomial", lmr=1e-3)
 pycoarse <- getpy(logitcoarse, x, ycoarse, test, PY=TRUE)
 
-png(file="graphs/yelp_logistic.png", width=12,height=6, units="in", res=180)
+png(file="paper/graphs/yelp_logistic.png", width=12,height=6, units="in", res=180)
 plot(logitcoarse)
 invisible(dev.off())
 
@@ -204,7 +204,7 @@ save.image("linmod.rda", compress=FALSE)
 
 ### some plots
 w2vpc <- w2vpcoarse[test,2]
-pdf("graphs/coarseprob.pdf", width=9, height=2.75)
+pdf("paper/graphs/coarseprob.pdf", width=9, height=2.75)
 par(mfrow=c(1,3),mai=c(.45,.45,.3,.2),omi=c(.15,.15,0,0))
 hist(w2vpc[ycoarse[test]==0], col=rgb(1,0,0,1), breaks=10, freq=FALSE,
          xlab="", ylab="", xlim=c(0,1), ylim=c(0,8), main="word2vec inversion")
@@ -227,7 +227,7 @@ mtext(side=1, "probability positive", outer=TRUE, cex=.9, font=3)
 dev.off()
 
 
-pdf("graphs/coarseprob_bystar.pdf", width=9, height=2.5)
+pdf("paper/graphs/coarseprob_bystar.pdf", width=9, height=2.5)
 par(mfrow=c(1,4),mai=c(.4,.4,.3,.2),omi=c(.2,.2,0,0))
 boxplot( w2vpc ~ yfine[test], col=heat.colors(5), varwidth=TRUE, main="word2vec inversion")
 boxplot( pycoarse ~ yfine[test], col=heat.colors(5), varwidth=TRUE, main="phrase regression")
@@ -238,7 +238,7 @@ mtext(side=2, "probability positive", outer=TRUE,cex=1, font=3)
 dev.off()
 
 w2vpnnpy <- w2vpnnp[cbind(1:n,ynnp)]
-pdf("graphs/nnpprob.pdf", width=9, height=2.5)
+pdf("paper/graphs/nnpprob.pdf", width=9, height=2.5)
 par(mfrow=c(1,4),mai=c(.4,.4,.3,.2),omi=c(.2,.2,0,0))
 boxplot( w2vpnnpy[test] ~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="word2vec inversion")
 boxplot( pynnp~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="phrase regression")
@@ -249,7 +249,7 @@ mtext(side=2, "probability of true category", outer=TRUE,cex=.9, font=3)
 dev.off()
 
 w2vpy <- w2vprob[cbind(1:n,stars)]
-pdf("graphs/fineprob.pdf", width=9, height=2.5)
+pdf("paper/graphs/fineprob.pdf", width=9, height=2.5)
 par(mfrow=c(1,4),mai=c(.4,.4,.3,.2),omi=c(.2,.2,0,0))
 boxplot( w2vpy[test] ~ yfine[test], col=heat.colors(5), varwidth=TRUE, ylim=c(0,1), main="word2vec inversion")
 boxplot( pyfine~ yfine[test], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="phrase regression")

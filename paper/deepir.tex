@@ -160,7 +160,7 @@ See \texttt{github.com/taddylab/deepir} for detail.
 Word2Vec trains $\mathcal{V}$ to maximize the skip-gram likelihood based on (\ref{eq:skipgram}).  We work with the Huffman softmax specification \cite{mikolov_distributed_2013}, which includes a pre-processing step to encode each vocabulary word in its representation via a binary Huffman tree (see Figure \ref{bht}).
 
 \begin{figure}
-~~\includegraphics[width=0.45\textwidth]{../graphs/bht}
+~~\includegraphics[width=0.45\textwidth]{graphs/bht}
 \caption{\label{bht} Binary Huffman encoding of a 4 word vocabulary, based upon 18 total utterances.  
 At each step proceeding from left to right the two nodes with lowest count are
 combined into a parent node.  Binary encodings are read back off of the splits
@@ -189,11 +189,11 @@ We apply the
 
 
 \begin{figure*}
-%\includegraphics[width=\textwidth]{../graphs/coarseprob}
+%\includegraphics[width=\textwidth]{graphs/coarseprob}
 
 % \vskip .5cm
 % \begin{center}
-\includegraphics[width=1\textwidth]{../graphs/coarseprob_bystar}
+\includegraphics[width=1\textwidth]{graphs/coarseprob_bystar}
 % \end{center}
 \vskip -.25cm
 \caption{\label{pic:coarseprob} Out-of-Sample fitted probabilities of a review being \emph{positive} (having greater than 2 stars) as a function of the true number of review stars. Box widths are proportional to number of observations in each class; roughly 10\% of reviews have each of 1-3 stars, while 30\% have 4 stars and 40\% have 5 stars.
@@ -202,11 +202,11 @@ We apply the
  
 % \begin{figure*}
 % \begin{center}
-% \includegraphics[width=.98\textwidth]{../graphs/nnpprob}
+% \includegraphics[width=.98\textwidth]{graphs/nnpprob}
 
 % \vskip .25cm
 
-% \includegraphics[width=.98\textwidth]{../graphs/fineprob}
+% \includegraphics[width=.98\textwidth]{graphs/fineprob}
 % \end{center}
 % \vskip -.25cm
 % \caption{\label{pic:fineprob} Out-of-Sample fitted probabilities for  observed truth.  In the top plot, we are predicting Negative ($\leq 2$), Neutral ($3$), or Positive ($\geq 4$).  In the bottom, we are predicting each of the separate 5 star ratings.}
