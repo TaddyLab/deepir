@@ -28,11 +28,10 @@ The approach is simple and modular, in that it will work with any language repre
 \section{Introduction}
 
 Distributed, or vector-space, language representations $\mathcal{V}$ consist
-of a {\it location} for every vocabulary {\it word} in $\mathds{R}^K$
-(sometimes referred to as the {\it word embedding}), where $K$ is the
-dimension of the latent representation space.  These word locations are
-learned to optimize, or approximately optimize, an objective function defined
-on the original text, such as a likelihood for word occurrences.
+of a location, or embedding, for every vocabulary {\it word} in $\mathds{R}^K$, where
+$K$ is the dimension of the latent representation space.  These locations
+are learned to optimize, perhaps approximately, an objective function
+defined on the original text such as a likelihood for word occurrences.
 
 A popular example is the Word2Vec machinery of
 Mikolov et al.~\shortcite{mikolov_distributed_2013}.  This trains the distributed
