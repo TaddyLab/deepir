@@ -84,44 +84,6 @@ dvycoarse <- as.numeric(dvstars>2)
 dvynnp <- cut(dvstars, c(0,2,3,5))
 dvyfine <- factor(dvstars)
 
-### Aggregate vector prediction
-cat("\n*** W2V AGGREGATION ***\n")
-
-cat("** COARSE **\n")
-avc <- gamlr(aggvec[-test,], ycoarse[-test], 
-            family="binomial", lambda.min.ratio=1e-3, verb=TRUE)
-pavc <- getpy(avc, aggvec, ycoarse, test)
-
-cat("** NNP **\n")
-avnnp <- dmr(cl=cl, aggvec[-test,], ynnp[-test], lmr=1e-3)
-pavnnp <- getpy(avnnp, aggvec, ynnp, test)
-
-cat("** FINE **\n")
-avfine <- dmr(cl=cl, aggvec[-test,], yfine[-test], lmr=1e-3)
-pavfine <- getpy(avfine, aggvec, yfine, test)
-
-## Topic regression
-cat("\n*** TOPIC REGRESSION ***\n")
-
-library(maptpx)
-xsmall <- as.simple_triplet_matrix(x[,colSums(x)>200])
-tpc <- topics(xsmall[-test,], K=100, verb=10)
-omega <- predict(tpc, xsmall)
-
-cat("** COARSE **\n")
-tc <- gamlr(omega[-test,], ycoarse[-test], 
-            family="binomial", lambda.min.ratio=1e-3, verb=TRUE)
-ptc <- getpy(tc, omega, ycoarse, test)
-
-cat("** NNP **\n")
-tnnp <- dmr(cl=cl, omega[-test,], ynnp[-test], lmr=1e-3)
-ptnnp <- getpy(tnnp, omega, ynnp, test)
-
-cat("** FINE **\n")
-tfine <- dmr(cl=cl, omega[-test,], yfine[-test], lmr=1e-3)
-ptfine <- getpy(tfine, omega, yfine, test)
-
-
 ### W2V inversion
 cat("\n**** W2V INVERSION ****\n")
 nullprob <- as.numeric(table(stars[-test])/length(stars[-test]))
@@ -147,7 +109,7 @@ logitcoarse <- gamlr(x[-test,], ycoarse[-test],
                 family="binomial", lmr=1e-3)
 pycoarse <- getpy(logitcoarse, x, ycoarse, test, PY=TRUE)
 
-png(file="graphs/yelp_logistic.png", width=6,height=3, units="in", res=720)
+png(file="graphs/yelp_logistic.png", width=12,height=6, units="in", res=180)
 plot(logitcoarse)
 invisible(dev.off())
 
@@ -212,15 +174,31 @@ zir <- srproj(mnir, x, select=100)
 
 cat("** COARSE **\n")
 fwdcoarse <- gamlr(zir[-test,], ycoarse[-test], lmr=1e-4, family="binomial")
-getpy(fwdcoarse, zir, ycoarse, test)
+pymnircoarse <- getpy(fwdcoarse, zir, ycoarse, test, PY=TRUE)
 
 cat("** NNP **\n")
 fwdnnp <- dmr(cl, zir[-test,], ynnp[-test],  lmr=1e-4)
-getpy(fwdnnp, zir, ynnp, test)
+pymnirnnp <- getpy(fwdnnp, zir, ynnp, test, PY=TRUE)
 
 cat("** FINE **\n")
 fwdfine <- dmr(cl, zir[-test,], yfine[-test],  lmr=1e-4)
-getpy(fwdfine, zir, yfine, test)\
+pymnirfine <- getpy(fwdfine, zir, yfine, test, PY=TRUE)
+
+### Aggregate vector prediction
+cat("\n*** W2V AGGREGATION ***\n")
+
+cat("** COARSE **\n")
+avc <- gamlr(aggvec[-test,], ycoarse[-test], 
+            family="binomial", lambda.min.ratio=1e-3)
+getpy(avc, aggvec, ycoarse, test)
+
+cat("** NNP **\n")
+avnnp <- dmr(cl=cl, aggvec[-test,], ynnp[-test], lmr=1e-3)
+getpy(avnnp, aggvec, ynnp, test)
+
+cat("** FINE **\n")
+avfine <- dmr(cl=cl, aggvec[-test,], yfine[-test], lmr=1e-3)
+getpy(avfine, aggvec, yfine, test)
 
 save.image("linmod.rda", compress=FALSE)
 
@@ -260,23 +238,23 @@ mtext(side=2, "probability positive", outer=TRUE,cex=1, font=3)
 dev.off()
 
 w2vpnnpy <- w2vpnnp[cbind(1:n,ynnp)]
-pdf("graphs/nnpprob.pdf", width=9, height=2.75)
-par(mfrow=c(1,3),mai=c(.45,.45,.3,.2),omi=c(.15,.15,0,0))
+pdf("graphs/nnpprob.pdf", width=9, height=2.5)
+par(mfrow=c(1,4),mai=c(.4,.4,.3,.2),omi=c(.2,.2,0,0))
 boxplot( w2vpnnpy[test] ~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="word2vec inversion")
 boxplot( pynnp~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="phrase regression")
 boxplot( pydvnnp~ dvynnp[dvtest], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="doc2vec regression")
-# boxplot( pymnirnnp~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="mnir")
+boxplot( pymnirnnp~ ynnp[test], col=c("red","grey","yellow"), varwidth=TRUE, ylim=c(0,1), main="mnir")
 mtext(side=1, "stars", outer=TRUE,cex=.9, font=3)
 mtext(side=2, "probability of true category", outer=TRUE,cex=.9, font=3)
 dev.off()
 
 w2vpy <- w2vprob[cbind(1:n,stars)]
-pdf("graphs/fineprob.pdf", width=9, height=2.75)
-par(mfrow=c(1,3),mai=c(.45,.45,.3,.2),omi=c(.15,.15,0,0))
+pdf("graphs/fineprob.pdf", width=9, height=2.5)
+par(mfrow=c(1,4),mai=c(.4,.4,.3,.2),omi=c(.2,.2,0,0))
 boxplot( w2vpy[test] ~ yfine[test], col=heat.colors(5), varwidth=TRUE, ylim=c(0,1), main="word2vec inversion")
 boxplot( pyfine~ yfine[test], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="phrase regression")
 boxplot( pydvfine~ dvyfine[dvtest], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="doc2vec regression")
-# boxplot( pymnirfine~ yfine[test], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="mnir")
+boxplot( pymnirfine~ yfine[test], col=heat.colors(5), ylim=c(0,1), varwidth=TRUE, main="mnir")
 mtext(side=1, "stars", outer=TRUE,cex=.9, font=3)
 mtext(side=2, "probability of true stars", outer=TRUE,cex=.9, font=3)
 dev.off()
