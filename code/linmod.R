@@ -4,6 +4,9 @@ suppressMessages(library(data.table))
 ## get results from w2v
 w2vprob <- fread("data/yelpw2vprobs.csv", header=TRUE, verbose=FALSE)
 
+## read the aggregated w2v vectors
+aggvec <- read.table("data/yelp_vectors.txt", sep="|")
+
 ## read in the text
 revs <- read.table("data/yelp_phrases.txt",
 	sep="|",quote=NULL, comment="", 
@@ -12,12 +15,14 @@ revs <- read.table("data/yelp_phrases.txt",
 x <- sparseMatrix( 
 			i=revs[,"id"]+1, j=as.numeric(revs[,"phrase"]), x=rep(1,nrow(revs)),
 			dimnames=list(NULL, levels(revs[,"phrase"])),
-            dims=c(nrow(w2vprob), nlevels(revs[,"phrase"])) )
+            dims=c(nrow(aggvec), nlevels(revs[,"phrase"])) )
 emptyrev <- which(rowSums(x)==0)
 
 x <- x[-emptyrev,colSums(x>0)>5]
 w2vprob <- as.matrix(w2vprob[-emptyrev,])
-print(n <- nrow(w2vprob))
+aggvec <- as.matrix(aggvec[-emptyrev,])
+
+print(n <- nrow(x))
 
 stars <- tapply(revs$stars, revs$id, mean)
 samp <- tapply( revs$sample=="test", revs$id, mean)
@@ -79,6 +84,44 @@ dvycoarse <- as.numeric(dvstars>2)
 dvynnp <- cut(dvstars, c(0,2,3,5))
 dvyfine <- factor(dvstars)
 
+### Aggregate vector prediction
+cat("\n*** W2V AGGREGATION ***\n")
+
+cat("** COARSE **\n")
+avc <- gamlr(aggvec[-test,], ycoarse[-test], 
+            family="binomial", lambda.min.ratio=1e-3, verb=TRUE)
+pavc <- getpy(avc, aggvec, ycoarse, test)
+
+cat("** NNP **\n")
+avnnp <- dmr(cl=cl, aggvec[-test,], ynnp[-test], lmr=1e-3)
+pavnnp <- getpy(avnnp, aggvec, ynnp, test)
+
+cat("** FINE **\n")
+avfine <- dmr(cl=cl, aggvec[-test,], yfine[-test], lmr=1e-3)
+pavfine <- getpy(avfine, aggvec, yfine, test)
+
+## Topic regression
+cat("\n*** TOPIC REGRESSION ***\n")
+
+library(maptpx)
+xsmall <- as.simple_triplet_matrix(x[,colSums(x)>200])
+tpc <- topics(xsmall[-test,], K=100, verb=10)
+omega <- predict(tpc, xsmall)
+
+cat("** COARSE **\n")
+tc <- gamlr(omega[-test,], ycoarse[-test], 
+            family="binomial", lambda.min.ratio=1e-3, verb=TRUE)
+ptc <- getpy(tc, omega, ycoarse, test)
+
+cat("** NNP **\n")
+tnnp <- dmr(cl=cl, omega[-test,], ynnp[-test], lmr=1e-3)
+ptnnp <- getpy(tnnp, omega, ynnp, test)
+
+cat("** FINE **\n")
+tfine <- dmr(cl=cl, omega[-test,], yfine[-test], lmr=1e-3)
+ptfine <- getpy(tfine, omega, yfine, test)
+
+
 ### W2V inversion
 cat("\n**** W2V INVERSION ****\n")
 nullprob <- as.numeric(table(stars[-test])/length(stars[-test]))
@@ -96,7 +139,7 @@ geterr(w2vpnnp[test,], ynnp[test])
 cat("** FINE **\n")
 geterr(w2vprob[test,], yfine[test])
 
-### COARSE logit word-count prediction
+### logit word-count prediction
 cat("\n*** COUNTREG ***\n")
 
 cat("** COARSE **\n")
@@ -128,37 +171,37 @@ cat("\n*** D2V ***\n")
 cat("** COARSE\n")
 cat("dm0 **\n")
 dv0coarse <- gamlr(dv0x[-dvtest,], dvycoarse[-dvtest],
-                family="binomial", lambda.start=0)
+                family="binomial", lmr=1e-4)
 getpy(dv0coarse, dv0x, dvycoarse, dvtest)
 cat("dm1 **\n")
 dv1coarse <- gamlr(dv1x[-dvtest,], dvycoarse[-dvtest],
-                family="binomial", lambda.start=0)
+                family="binomial", lmr=1e-4)
 getpy(dv1coarse, dv1x, dvycoarse, dvtest)
 cat("dm both **\n")
 dvcoarse <- gamlr(dvx[-dvtest,], dvycoarse[-dvtest],
-                family="binomial", lambda.start=0)
+                family="binomial", lmr=1e-4)
 pydvcoarse <- getpy(dvcoarse, dvx, dvycoarse, dvtest, PY=TRUE)
 
 cat("** NNP\n")
 cat("dm0 **\n")
-dv0nnp <- dmr(cl, dv0x[-dvtest,], dvynnp[-dvtest], lambda.start=0)
+dv0nnp <- dmr(cl, dv0x[-dvtest,], dvynnp[-dvtest], lmr=1e-4)
 getpy(dv0nnp, dv0x, dvynnp, dvtest)
 cat("dm1 **\n")
-dv1nnp <- dmr(cl, dv1x[-dvtest,], dvynnp[-dvtest], lambda.start=0)
+dv1nnp <- dmr(cl, dv1x[-dvtest,], dvynnp[-dvtest], lmr=1e-4)
 getpy(dv1nnp, dv1x, dvynnp, dvtest)
 cat("dm both **\n")
-dvnnp <- dmr(cl, dvx[-dvtest,], dvynnp[-dvtest], lambda.start=0)
+dvnnp <- dmr(cl, dvx[-dvtest,], dvynnp[-dvtest], lmr=1e-4)
 pydvnnp <- getpy(dvnnp, dvx, dvynnp, dvtest, PY=TRUE)
 
 cat("** FINE\n")
 cat("dm0 **\n")
-dv0fine <- dmr(cl, dv0x[-dvtest,], dvyfine[-dvtest], lambda.start=0)
+dv0fine <- dmr(cl, dv0x[-dvtest,], dvyfine[-dvtest], lmr=1e-4)
 getpy(dv0fine, dv0x, dvyfine, dvtest)
 cat("dm1 **\n")
-dv1fine <- dmr(cl, dv1x[-dvtest,], dvyfine[-dvtest], lambda.start=0)
+dv1fine <- dmr(cl, dv1x[-dvtest,], dvyfine[-dvtest], lmr=1e-4)
 getpy(dv1fine, dv1x, dvyfine, dvtest)
 cat("dm both **\n")
-dvfine <- dmr(cl, dvx[-dvtest,], dvyfine[-dvtest], lambda.start=0)
+dvfine <- dmr(cl, dvx[-dvtest,], dvyfine[-dvtest], lmr=1e-4)
 pydvfine <- getpy(dvfine, dvx, dvyfine, dvtest, PY=TRUE)
 
 # mnir
@@ -168,15 +211,15 @@ mnir <- mnlm(cl=cl, vmat[-test,], x[-test,], verb=1, bins=5)
 zir <- srproj(mnir, x, select=100)
 
 cat("** COARSE **\n")
-fwdcoarse <- gamlr(zir[-test,], ycoarse[-test], lambda.start=0, family="binomial")
+fwdcoarse <- gamlr(zir[-test,], ycoarse[-test], lmr=1e-4, family="binomial")
 getpy(fwdcoarse, zir, ycoarse, test)
 
 cat("** NNP **\n")
-fwdnnp <- dmr(cl, zir[-test,], ynnp[-test],  lambda.start=0)
+fwdnnp <- dmr(cl, zir[-test,], ynnp[-test],  lmr=1e-4)
 getpy(fwdnnp, zir, ynnp, test)
 
 cat("** FINE **\n")
-fwdfine <- dmr(cl, zir[-test,], yfine[-test],  lambda.start=0)
+fwdfine <- dmr(cl, zir[-test,], yfine[-test],  lmr=1e-4)
 getpy(fwdfine, zir, yfine, test)
 
 

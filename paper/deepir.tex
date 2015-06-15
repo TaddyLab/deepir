@@ -52,7 +52,7 @@ neural networks \cite{rumelhart_learning_1986} and have long been applied in
 natural language processing \cite{morin_hierarchical_2005}.  The models are
 generating much recent interest due to the large performance gains from the
 newer systems, including Word2Vec and the Glove model of Pennington et
-al.~\shortcite{pennington_glove:_2014}, observed in tasks such as word
+al.~\shortcite{pennington_glove:_2014}, observed in, e.g., word
 prediction, word analogy identification, and named entity recognition.
 
 Given the success of these new models, researchers have begun searching for
@@ -111,11 +111,10 @@ approach has a number of attractive qualities.
 \noindent \textbf{Simplicity:} The inversion strategy works for any model of
 language that can (or its training can) be interpreted as a probabilistic
 model.  This makes for easy implementation in systems that are already 
-engineered to fit such language representations.  
-%This will lead to faster deployment and lower development costs.  
+engineered to fit such language representations, leading to faster deployment and lower development costs.  
 The strategy is also interpretable: whatever intuition one has about the
 distributed language model can be applied directly to the 
-inversion-based classification rule.  Finally, inversion adds a
+inversion-based classification rule.  Inversion adds a
 plausible model for reader understanding on top of any given language
 representation.
 
@@ -135,13 +134,13 @@ ensemble aggregation of the class-specific answers.
 Word2Vec yields lower misclassification rates than both Doc2Vec-based
 classification and the multinomial inverse regression (MNIR) of Taddy
 \shortcite{taddy_multinomial_2013}.  We did not anticipate such outright
-performance gain.  Moreover, we expect that with calibration of the
-{\it many} various tuning parameters available when fitting both Word and Doc
-2Vec the performance results will change.  Indeed, we find that all methods
-are often outperformed by phrase-count logistic regression with rare-feature
-up-weighting and carefully chosen regularization.  However, the completely
-untuned out-of-the-box performance of Word2Vec inversion argues for its
-consideration as a simple default in document classification.
+performance gain.  Moreover, we expect that with calibration (i.e., through
+cross-validation) of the {\it many} various tuning parameters available when
+fitting both Word and Doc 2Vec the performance results will change.  Indeed,
+we find that all methods are often outperformed by phrase-count logistic
+regression with rare-feature up-weighting and carefully chosen regularization.
+However, the  out-of-the-box performance of Word2Vec inversion
+argues for its consideration as a simple default in document classification.
 
 \vskip .2cm
 In the remainder, we outline classification through inversion of a specific
@@ -196,8 +195,7 @@ We apply the
 \includegraphics[width=1\textwidth]{../graphs/coarseprob_bystar}
 % \end{center}
 \vskip -.25cm
-\caption{\label{pic:coarseprob} Out-of-Sample fitted probabilities of a review having greater than 2 stars. 
-%In the top histograms, red (dark) are the probabilities for true negative reviews and yellow (light) are for true positives.
+\caption{\label{pic:coarseprob} Out-of-Sample fitted probabilities of a review having greater than 2 stars. Box widths are proportional to number of observations in each class; notice that reviews with 4-5 stars are most common.
 }
 \end{figure*}
  
@@ -219,7 +217,7 @@ leading to $C$ distinct language representations $\mathcal{V}_1 \dots
 the $S$-sentence document $d$:  each sentence $\mathbf{w}_s$ is given a 
 probability under each representation $\mathcal{V}_c$ by applying the
 calculations in (\ref{eq:skipgram}) and (\ref{eq:neuralnet}).  This leads to
-the $S \times C$ matrix of sentence probabilites,
+the $S \times C$ matrix of sentence probabilities,
 $\mathrm{p}_{\mathcal{V}_c}(\mathbf{w}_s)$, and  document probabilities are
 obtained %as the column means
 \begin{equation}
@@ -255,53 +253,75 @@ $b.$ negative 1-2, neutral 3, or positive 4-5 stars;
 $c.$ corresponding to each of 1 to 5 stars.
 
 \vskip .1cm
-In each case, classification proceeds but summing across the relevant
+In each case, classification proceeds by summing across the relevant
 sub-class probabilities.  For example, in task $a$,
 $\mathrm{p}(\texttt{positive}) = q_3+q_4+q_5$. Note that the same five fitted
 Word2Vec representations are used for each task.
 
-We consider three comparator techniques.
+We consider a set of related comparator techniques.  In each case, some
+document representation (e.g., phrase counts or Doc2Vec vectors) is used as
+input to logistic regression prediction of the associated review rating.
+The logistic regressions are fit under $L_1$ regularization with the
+penalties weighted by feature standard deviation (which, e.g., up-weights rare
+phrases) and selected according to the corrected AICc criteria
+\cite{flynn_efficiency_2013} via the \texttt{gamlr} R package of Taddy
+\shortcite{taddy_one-step_2014}.  For multi-class tasks $b$-$c$, we use
+distributed Multinomial regression (DMR; Taddy
+2015)\nocite{taddy_distributed_2015} via the \texttt{distrom} R package.  DMR
+fits multinomial logistic regression in a factorized representation wherein
+one estimates independent Poisson linear models for each response category.
+Document representations and logistic regressions are
+always trained using only the training corpus.
+
 
 \vskip .1cm
 \noindent \textit{Doc2Vec} is also fit via \texttt{gensim}, using the same
 latent space specification as for Word2Vec: $K=100$ and $b=5$.  
-% As recommended
-% in the documentation, we apply repeated SGD over 20 re-orderings of each
-% corpus (for comparability, this was also done when fitting Word2Vec).
+As recommended in the documentation, we apply repeated SGD over 20 re-orderings of each
+ corpus (for comparability, this was also done when fitting Word2Vec).
 Le and Mikolov provide two alternative Doc2Vec specifications: distributed
 memory (DM) and distributed bag-of-words (DBOW).  We fit both. Vector representations for validation documents are trained without
 updating the word-vector elements, leading to 100 dimensional vectors for
 each document for each of DM and DCBOW.  We input each, as well as the combined 200 dimensional
-DM+DBOW representation, to  separate maximum
-likelihood logistic regressions. 
+DM+DBOW representation, to logistic regression.   
+
+
+\vskip .1cm
+\noindent \textit{Phrase regression} applies logistic regression of 
+response classes directly onto counts for short 1-2 word `phrases'.  The phrases are
+obtained using \texttt{gensim}'s phrase builder, which simply combines highly
+probable pairings; e.g., \texttt{first\_date} and
+\texttt{chicken\_wing} are two pairings in this corpus.  
 
 \vskip .1cm
 \noindent \textit{MNIR}, the multinomial inverse regression of Taddy
-\shortcite{taddy_multinomial_2013,taddy_distributed_2014}, %taddy_measuring_2013
+\shortcite{taddy_measuring_2013,taddy_multinomial_2013,taddy_distributed_2015}
 is applied  as implemented in the \texttt{textir} package for R.  MNIR maps
 from text to the class-space of interest through a multinomial logistic
-regression of word (or phrase) counts onto variables relevant to the
-class-space. Here, we regress word counts onto stars expressed 
-numerically and as a 5-dimensional indicator vector, leading to a 6-feature
-multinomial logistic regression.  The MNIR procedure then uses the $6\times p$
-matrix of feature-word regression coefficients to map from word-count to
-feature space, resulting in 6 dimensional `sufficient reduction' statistics
-for each document.  These statistics are then input to maximum
-likelihood logistic regressions.
+regression of phrase counts onto variables relevant to the class-space. We
+apply MNIR to the same set of 1-2 word phrases used in phrase regression.
+Here, we regress phrase counts onto stars expressed numerically and as a
+5-dimensional indicator vector, leading to a 6-feature multinomial logistic
+regression.  The MNIR procedure then uses the $6\times p$ matrix of 
+feature-phrase regression coefficients to map from phrase-count to feature space,
+resulting in 6 dimensional `sufficient reduction' statistics for each
+document.  These  are input to logistic
+regression.
 
 \vskip .1cm
-\noindent \textit{Phrase regression} applies logistic regression of the
-response classes directly onto word or phrase counts.  The phrases are
-obtained using \texttt{gensim}'s phrase builder, which simply combines highly
-probable pairings; for example, it yields \texttt{first\_date} and
-\texttt{chicken\_wing} in this corpus (these phrases are also used as the
-bag-of-words input to MNIR).  The logistic regressions are then fit under
-$L_1$ regularization with the penalties weighted by phrase-count standard
-deviation (feature scaling) and selected according to the corrected AICc
-criteria \cite{flynn_efficiency_2013}, using the \texttt{gamlr} R package of
-Taddy \shortcite{taddy_one-step_2014}.  For multi-class tasks $b-c$, we use
-\texttt{gamlr} in distribution via the \texttt{distrom} R package of Taddy
-\shortcite{taddy_distributed_2014}.
+\noindent \textit{Word2Vec aggregation}  averages  fitted word
+representations for a single Word2Vec trained on all sentences to obtain a
+fixed-length feature vector for each review ($K=100$, as for inversion).  This
+vector is then input to logistic regression.
+
+% \vskip .1cm
+% \noindent \textit{Topic regression}  fits the Latent Dirichlet
+% Allocation  of  Blei et al.~\shortcite{blei_latent_2003} using the posterior
+%  maximization and Bayes factor selection strategy of Taddy
+% \shortcite{taddy_estimation_2012} as implemented in \texttt{maptpx} for R.
+% Estimated topic weights for each document are then used as inputs to logistic
+% regression.  Due to high computational costs, we limit to words occurring in
+% at least 200 documents.
 
 \begin{table}
 \hspace{-.25cm}
@@ -314,7 +334,9 @@ Phrase regression & \textbf{.084} & .200 & \textbf{.410} \\
 D2V DBOW &  .144 &.282 & .496 \\
 D2V DM & .179 & .306 & .549 \\
 D2V combined & .148 & . 284 & .5 \\
-MNIR & .095 & .254 & .508 
+MNIR & .095 & .254 & .508 \\
+W2V aggregation & 0.118 & 0.247 & 0.464 
+%\\ topic regression & & & 
 \end{tabular}}
 \caption{ Out-of-sample misclassification rates.}
 \end{table}
@@ -327,7 +349,7 @@ strongest performer, bested only by Word2Vec inversion on task $b$.  This is
 partially due to the relative strengths of discriminative (e.g., logistic
 regression) vs generative (e.g., all others here) classifiers: given a large amount of
 training text, asymptotic efficiency of logistic regression will start to work
-in its favor over the finite sample advantages of generative discrimination
+in its favor over the finite sample advantages of a generative classifier
 \cite{ng_discriminative_2002,taddy_rejoinder:_2013}.
 However, the comparison is also unfair to Word2Vec and Doc2Vec: both
 phrase regression and MNIR are optimized exactly under
@@ -335,24 +357,28 @@ AICc selected penalty, while Word and Doc 2Vec have only been approximately
 optimized under a single specification.  The
 distributed representations should improve  with some careful engineering.
 
-Word2Vec inversion outperforms the other generative classifier alternatives
-(except, by a narrow margin, MNIR in task $a$).  Doc2Vec under DBOW
-specification and MNIR both do worse, but not by a large margin.  Their
-similar performance might be expected: both have a version of logistic (or
-softmax) regression for word-counts as their first step.  MNIR
-regresses the words onto observed class information, while Doc2Vec DBOW
-regresses onto a latent vector space.  In contrast to  Le and Mikolov, we find here that the Doc2Vec DM model does much worse
-than DBOW.
+Word2Vec inversion outperforms the other document representation-based
+alternatives (except, by a narrow margin, MNIR in task $a$).  Doc2Vec under
+DBOW specification and MNIR both do worse, but not by a large margin. In
+contrast to  Le and Mikolov, we find here that the Doc2Vec DM model does much
+worse than DBOW.  Regression onto simple within- document aggregations of
+Word2Vec perform slightly better than any Doc2Vec option (but not as well as
+the Word2Vec inversion).  This again contrasts the results of Le and Mikolov
+and, as pointed out in the introduction, we suspect that the more complex
+Doc2Vec model would benefit from a careful tuning of the SGD optimization
+routine.
 
-Looking at the fitted probabilities in detail we see that Word2Vec provides a
-more useful document {\it ranking} than any comparator (including phrase
-regression).  For example, Figure \ref{pic:coarseprob} shows the probabilities
-of a review being `positive' in task $a$ as a function of the true star rating
-for each validation review. Although phrase regression does slightly better in terms of misclassification rate, it does so at the cost of
+Looking at the fitted probabilities in detail we see that Word2Vec inversion
+provides a more useful document {\it ranking} than any comparator (including
+phrase regression).  For example, Figure \ref{pic:coarseprob} shows the
+probabilities of a review being `positive' in task $a$ as a function of the
+true star rating for each validation review. Although phrase regression does
+slightly better in terms of misclassification rate, it does so at the cost of
 classifying many terrible (1 star) reviews as positive.  Word2Vec inversion is
 the {\it only} method that yields positive-document probabilities that are
 clearly increasing in distribution with the true star rating.  It is not
-difficult to envision a misclassification cost structure that favors such nicely ordered probabilities.
+difficult to envision a misclassification cost structure that favors such
+nicely ordered probabilities.
 
 \section{Discussion}
 

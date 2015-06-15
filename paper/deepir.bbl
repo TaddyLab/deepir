@@ -1,0 +1,115 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citename{Flynn \bgroup et al.\egroup
+  }2013]{flynn_efficiency_2013}
+Cheryl Flynn, Clifford Hurvich, and Jefferey Simonoff.
+\newblock 2013.
+\newblock Efficiency for {Regularization} {Parameter} {Selection} in
+  {Penalized} {Likelihood} {Estimation} of {Misspecified} {Models}.
+\newblock {\em Journal of the American Statistical Association},
+  108:1031--1043.
+
+\bibitem[\protect\citename{Le and Mikolov}2014]{le_distributed_2014}
+Quoc~V. Le and Tomas Mikolov.
+\newblock 2014.
+\newblock Distributed representations of sentences and documents.
+\newblock In {\em Proceedings of the 31 st {International} {Conference} on
+  {Machine} {Learning}}.
+
+\bibitem[\protect\citename{Mikolov \bgroup et al.\egroup
+  }2013]{mikolov_distributed_2013}
+Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg~S. Corrado, and Jeff Dean.
+\newblock 2013.
+\newblock Distributed representations of words and phrases and their
+  compositionality.
+\newblock In {\em Advances in {Neural} {Information} {Processing} {Systems}},
+  pages 3111--3119.
+
+\bibitem[\protect\citename{Morin and Bengio}2005]{morin_hierarchical_2005}
+Frederic Morin and Yoshua Bengio.
+\newblock 2005.
+\newblock Hierarchical probabilistic neural network language model.
+\newblock In {\em Proceedings of the {International} {Workshop} on {Artificial}
+  {Intelligence} and {Statistics}}, pages 246--252.
+
+\bibitem[\protect\citename{Ng and Jordan}2002]{ng_discriminative_2002}
+Andrew~Y. Ng and Michael~I. Jordan.
+\newblock 2002.
+\newblock On {Discriminative} vs {Generative} {Classifiers}: {A} {Comparison}
+  of {Logistic} {Regression} and naive {Bayes}.
+\newblock In {\em Advances in {Neural} {Information} {Processing} {Systems}
+  ({NIPS})}.
+
+\bibitem[\protect\citename{Pennington \bgroup et al.\egroup
+  }2014]{pennington_glove:_2014}
+Jeffrey Pennington, Richard Socher, and Christopher~D. Manning.
+\newblock 2014.
+\newblock Glove: {Global} vectors for word representation.
+\newblock {\em Proceedings of the Empiricial Methods in Natural Language
+  Processing (EMNLP 2014)}, 12.
+
+\bibitem[\protect\citename{Rehurek and Sojka}2010]{rehurek_software_2010}
+Radim Rehurek and Petr Sojka.
+\newblock 2010.
+\newblock Software {Framework} for {Topic} {Modelling} with {Large} {Corpora}.
+\newblock In {\em Proceedings of the {LREC} 2010 {Workshop} on {New}
+  {Challenges} for {NLP} {Frameworks}}, pages 45--50.
+
+\bibitem[\protect\citename{Rumelhart \bgroup et al.\egroup
+  }1986]{rumelhart_learning_1986}
+David Rumelhart, Geoffrey Hinton, and Ronald Williams.
+\newblock 1986.
+\newblock Learning representations by back-propagating errors.
+\newblock {\em Nature}, 323:533--536.
+
+\bibitem[\protect\citename{Socher \bgroup et al.\egroup
+  }2011]{socher_parsing_2011}
+Richard Socher, Cliff~C. Lin, Chris Manning, and Andrew~Y. Ng.
+\newblock 2011.
+\newblock Parsing natural scenes and natural language with recursive neural
+  networks.
+\newblock In {\em Proceedings of the 28th international conference on machine
+  learning ({ICML}-11)}, pages 129--136.
+
+\bibitem[\protect\citename{Socher \bgroup et al.\egroup
+  }2013]{socher_recursive_2013}
+Richard Socher, Alex Perelygin, Jean~Y. Wu, Jason Chuang, Christopher~D.
+  Manning, Andrew~Y. Ng, and Christopher Potts.
+\newblock 2013.
+\newblock Recursive deep models for semantic compositionality over a sentiment
+  treebank.
+\newblock In {\em Proceedings of the conference on empirical methods in natural
+  language processing ({EMNLP})}, volume 1631, page 1642.
+
+\bibitem[\protect\citename{Taddy}2013a]{taddy_measuring_2013}
+Matt Taddy.
+\newblock 2013a.
+\newblock Measuring {Political} {Sentiment} on {Twitter}: {Factor} {Optimal}
+  {Design} for {Multinomial} {Inverse} {Regression}.
+\newblock {\em Technometrics}, 55(4):415--425, November.
+
+\bibitem[\protect\citename{Taddy}2013b]{taddy_multinomial_2013}
+Matt Taddy.
+\newblock 2013b.
+\newblock Multinomial {Inverse} {Regression} for {Text} {Analysis}.
+\newblock {\em Journal of the American Statistical Association}, 108:755--770.
+
+\bibitem[\protect\citename{Taddy}2013c]{taddy_rejoinder:_2013}
+Matt Taddy.
+\newblock 2013c.
+\newblock Rejoinder: {Efficiency} and structure in {MNIR}.
+\newblock {\em Journal of the American Statistical Association}, 108:772--774.
+
+\bibitem[\protect\citename{Taddy}2014]{taddy_one-step_2014}
+Matt Taddy.
+\newblock 2014.
+\newblock One-step estimator paths for concave regularization.
+\newblock arXiv:1308.5623.
+
+\bibitem[\protect\citename{Taddy}2015]{taddy_distributed_2015}
+Matt Taddy.
+\newblock 2015.
+\newblock Distributed {Multinomial} {Regression}.
+\newblock {\em Annals of Applied Statistics}, To appear.
+
+\end{thebibliography}
