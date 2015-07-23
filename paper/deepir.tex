@@ -88,7 +88,7 @@ For example, in Word2Vec the skip-gram likelihood in
 (\ref{eq:skipgram}) yields
 \begin{equation}\label{eq:fulllhd}
 \log\mathrm{p}_{ \mathcal{V}}(d) = \sum_s \sum_{t} \sum_{j\neq t,~j=t-b}^{t+b} 
-\log\mathrm{p}_{ \mathcal{V}_y}(w_{sj}\mid w_{st} ).
+\log\mathrm{p}_{ \mathcal{V}}(w_{sj}\mid w_{st} ).
 \end{equation}
 Even when such a likelihood is not explicit it will be implied by the objective function that is optimized during training.
 
