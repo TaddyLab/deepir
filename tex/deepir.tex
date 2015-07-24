@@ -86,16 +86,16 @@ word's context (surrounding words),  while the alternative CBOW Word2Vec
 specification \cite{mikolov2013efficient} targets the conditional probability
 for each word given its context.  Although these objectives do not correspond to a full document likelihood model, they can be interpreted as components in a \textit{composite likelihood}\footnote{Composite likelihoods are a common tool in analysis of spatial data and data on graphs.  They were popularized in statistics by Besag's \shortcite{besag_spatial_1974,besag1975statistical} work on the pseudolikelihood -- $\mathrm{p}(\mathbf{w}) \approx \prod_j \mathrm{p}(w_j |\mathbf{w}_{-j})$ -- for analysis of Markov random fields. See Varin et al. \shortcite{varin2011overview} for a detailed review.} approximation.
 
-Use $\mathbf{w} = [w_1\dots w_T]'$ to denote a sentence: an ordered vector of word identities.
+Use $\mathbf{w} = [w_1\dots w_T]'$ to denote a sentence: an ordered vector of words.
 The skip-gram  in
-(\ref{eq:skipgram}) yields the pairwise composite likelihood\footnote{See  Molenberghs and Verbeke  \shortcite{molenberghs2006models} for  similar pairwise compositions in analysis of longitudinal data.}
+(\ref{eq:skipgram}) yields the pairwise composite log likelihood\footnote{See  Molenberghs and Verbeke  \shortcite{molenberghs2006models} for  similar pairwise compositions in analysis of longitudinal data.}
 \begin{equation}\label{eq:sentencelhd} \log\mathrm{p}_{ \mathcal{V}}(\mathbf{w}) = 
 \sum_{j=1}^T\sum_{k=1}^T \mathds{1}_{\left[1\leq |k-j| \leq b\right]} \log\mathrm{p}_{ \mathcal{V}}(w_{k}|
 w_{j} ). \end{equation} 
 In another example, Jernite et al.~\shortcite{jernite2015mrf} show that CBOW Word2Vec corresponds to the pseudolikelihood for a Markov random field sentence model.  
 
 Finally, given  a  sentence likelihood as in (\ref{eq:sentencelhd}), document $d =
-\{\mathbf{w}_1, ... \mathbf{w}_S\}$ has  likelihood 
+\{\mathbf{w}_1, ... \mathbf{w}_S\}$ has  log likelihood 
 \begin{equation}\label{eq:fulllhd} \log\mathrm{p}_{ \mathcal{V}}(d) = 
 \sum_{s}  \log\mathrm{p}_{ \mathcal{V}}(\mathbf{w}_s). \end{equation} 
 
